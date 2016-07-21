@@ -430,7 +430,6 @@ namespace etc
 		public void Cancel(int id)
 		{
 			string msg = string.Format("CANCEL {0}", id);
-			Console.WriteLine("SEND: " + msg);
 
 			writer.WriteLine(msg);
 			writer.Flush();
