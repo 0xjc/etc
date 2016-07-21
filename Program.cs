@@ -27,6 +27,9 @@ namespace etc
             var adr = new ADRArbitrager(market);
             Task.Run(() => { adr.Main(); });
 
+			var etf = new ETFArbitrager(market);
+			Task.Run(() => { etf.Main(); });
+
 			market.ReceiveLoop();
 		}
 	}
