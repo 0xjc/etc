@@ -8,10 +8,12 @@ namespace etc
 {
 	class EquityMarketMaker
 	{
+		private object thisLock = new object();
 		private Market market;
 		private string symbol;
 		private SortedDictionary<int, int> buys;
 		private SortedDictionary<int, int> sells;
+
 
 		public EquityMarketMaker(Market market_, string symbol_)
 		{
@@ -22,11 +24,24 @@ namespace etc
 			market.Book += Market_Book;
 		}
 
+		public void Main()
+		{
+
+		}
+
+		private void Recalcluate()
+		{
+
+		}
+
 		private void Market_Book(object sender, BookEventArgs e)
 		{
-			if (e.symbol != symbol) return;
-			buys = e.
-			throw new NotImplementedException();
+			lock (thisLock)
+			{
+				if (e.symbol != symbol) return;
+				buys = e.buys;
+				sells = e.sells;
+			}
 		}
 	}
 }
