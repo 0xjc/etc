@@ -11,6 +11,7 @@ namespace etc
 	{
 		static void Main(string[] args)
 		{
+            Console.WriteLine("hello swj05652");
 			var client = new TcpClient(args[1], int.Parse(args[2]));
 			var stream = client.GetStream();
 		}
