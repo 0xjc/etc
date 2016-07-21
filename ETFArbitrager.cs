@@ -240,8 +240,8 @@ namespace etc
 				}
 
 				DoArb();
-				DoConvert();
-				DoUnposition();
+				//DoConvert();
+				//DoUnposition();
 			}
 		}
 
