@@ -353,15 +353,15 @@ namespace etc
 
 		public int Add(string symbol, Direction dir, int price, int size)
 		{
-			if (size < 0)
+			if (size <= 0)
 			{
-				LogError("ADD with negative size attempted");
+				LogError("ADD with nonpositive size attempted");
 				return INVALID_ID;
 			}
 
-			if (price < 0)
+			if (price <= 0)
 			{
-				LogError("ADD with negative price attempted");
+				LogError("ADD with nonpositive price attempted");
 				return INVALID_ID;
 			}
 
@@ -376,9 +376,9 @@ namespace etc
 
 		public int Convert(string symbol, Direction dir, int size)
 		{
-			if (size < 0)
+			if (size <= 0)
 			{
-				LogError("CONVERT with negative size attempted");
+				LogError("CONVERT with nonpositive size attempted");
 				return INVALID_ID;
 			}
 
