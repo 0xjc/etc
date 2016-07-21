@@ -24,6 +24,9 @@ namespace etc
 			var bonds = new BondMarketMaker(market);
 			Task.Run(() => { bonds.Main(); });
 
+            var adr = new ADRArbitrager(market);
+            Task.Run(() => { adr.Main(); });
+
 			market.ReceiveLoop();
 		}
 	}
