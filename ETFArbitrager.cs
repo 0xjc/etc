@@ -96,6 +96,7 @@ namespace etc
 
 		private Dictionary<string, Security> secs;
 		private Dictionary<string, List<Order>> orders;
+		int prevXLFOrder = Market.INVALID_ID;
 
 		public ETFArbitrager(Market market_)
 		{
@@ -140,13 +141,19 @@ namespace etc
 				double diff = xlf.fair - 0.3 * bond.fair
 					- 0.2 * gs.fair - 0.3 * ms.fair - 0.2 * wfc.fair;
 				
+				if (prevXLFOrder != Market.INVALID_ID)
+				{
+					market.Cancel(prevXLFOrder);
+					prevXLFOrder = Market.INVALID_ID;
+				}
+
 				if (diff > 10.0)
 				{
-					market.Add("XLF", Direction.SELL, (int)Math.Round(xlf.fair), 10);
+					prevXLFOrder = market.Add("XLF", Direction.SELL, (int)Math.Round(xlf.fair), 10);
 				}
 				else if (diff < -10.0)
 				{
-					market.Add("XLF", Direction.BUY, (int)Math.Round(xlf.fair), 10);
+					prevXLFOrder = market.Add("XLF", Direction.BUY, (int)Math.Round(xlf.fair), 10);
 				}
 			}
 		}

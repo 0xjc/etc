@@ -112,7 +112,7 @@ namespace etc
 		private StreamReader reader;
 		private StreamWriter writer;
 
-		const int INVALID_ID = -1;
+		public const int INVALID_ID = -1;
 		private int currentID = 0;
 		private int cash;
 		private ConcurrentDictionary<string, int> positions;
