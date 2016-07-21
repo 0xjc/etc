@@ -110,8 +110,8 @@ namespace etc
                     ordBid = e.buys.Last().Key;
                     ordAsk = e.sells.First().Key;
 
-                    adrBuyOrderID = market.Add(adrTicker, Direction.BUY, ordBid - 3, Math.Min(10 - adr, 8));
-                    adrSellOrderID = market.Add(adrTicker, Direction.SELL, ordAsk + 3, Math.Min(10 + adr, 8));
+                    adrBuyOrderID = market.Add(adrTicker, Direction.BUY, ordBid - 3, Math.Min(10 - adr, 10));
+                    adrSellOrderID = market.Add(adrTicker, Direction.SELL, ordAsk + 3, Math.Min(10 + adr, 10));
                 }
             }
             if (ticker == adrTicker)
