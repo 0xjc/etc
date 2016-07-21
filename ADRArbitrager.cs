@@ -19,6 +19,10 @@ namespace etc
 
         public int adrBuyOrderID;
         public int adrSellOrderID;
+        public int adrAsk;
+        public int adrBid;
+        public int ordAsk;
+        public int ordBid;
 
         private Market market;
 
@@ -30,6 +34,7 @@ namespace etc
             cash = 0;
             adrBuyOrderID = -1;
             adrSellOrderID = -1;
+            adrAsk = adrBid = ordAsk = ordBid = -1;
             canTrade = false;
         }
 
@@ -40,11 +45,81 @@ namespace etc
             market.Close += market_Close;
             market.Ack += market_Ack;
             market.Fill += market_Fill;
+            market.Book += market_Book;
+
             while (true)
             {
                 if (canTrade)
                 {
+                    if (Math.Abs(adr) == 10)
+                    {
+                        CancelAllOrder();
+                        Direction dir = Direction.BUY;
+                        if (adr == 10)
+                            dir = Direction.SELL;
+                        market.Convert(adrTicker, dir, 10);
+                        ord = adr;
+                        adr = 0;
+                        
+                    }
 
+                    if (ord != 0)
+                    {
+                        if (ord > 0)
+                        {
+                            int orderId = market.Add(ordTicker, Direction.SELL, ordBid ,1);
+                            Task.Delay(200).Wait();
+                            market.Cancel(orderId);
+                        }
+                        else
+                        {
+                            int orderId = market.Add(ordTicker, Direction.BUY, ordAsk, 1);
+                            Task.Delay(200).Wait();
+                            market.Cancel(orderId);
+                        }
+                    }
+
+                    Task.Delay(100).Wait();
+                }
+            }
+        }
+
+        public void CancelAllOrder()
+        {
+            if (adrBuyOrderID >= 0)
+            {
+                market.Cancel(adrBuyOrderID);
+                adrBuyOrderID = -1;
+            }
+            if (adrSellOrderID >= 0)
+            {
+                market.Cancel(adrSellOrderID);
+                adrSellOrderID = -1;
+            }
+        }
+
+        void market_Book(object sender, BookEventArgs e)
+        {
+            string ticker = e.symbol;
+            if (ticker == ordTicker)
+            {
+                if ((e.buys.Count > 0) && (e.sells.Count > 0))
+                {
+                    CancelAllOrder();
+
+                    ordBid = e.buys.Last().Key;
+                    ordAsk = e.sells.First().Key;
+
+                    adrBuyOrderID = market.Add(adrTicker, Direction.BUY, ordBid - 3, Math.Min(10 - adr, 10));
+                    adrSellOrderID = market.Add(adrTicker, Direction.SELL, ordAsk + 3, Math.Min(10 + adr, 10));
+                }
+            }
+            if (ticker == adrTicker)
+            {
+                if ((e.buys.Count > 0) && (e.sells.Count > 0))
+                {
+                    adrBid = e.buys.Last().Key;
+                    adrAsk = e.sells.First().Key;
                 }
             }
         }
@@ -59,7 +134,7 @@ namespace etc
                         cash -= e.price * e.size;
                         if (e.symbol == adrTicker)
                             adr += e.size;
-                        else
+                        else if(e.symbol == ordTicker)
                             ord += e.size;
                     }
                     else
@@ -67,7 +142,7 @@ namespace etc
                         cash += e.price * e.size;
                         if (e.symbol == adrTicker)
                             adr -= e.size;
-                        else
+                        else if(e.symbol == ordTicker)
                             ord -= e.size;
                     }
                 
