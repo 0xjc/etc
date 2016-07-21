@@ -8,19 +8,36 @@ namespace etc
 {
 	class EquityMarketMaker
 	{
+		private const string
+			BOND = "BOND",
+			GS = "GS",
+			MS = "MS",
+			WFC = "WFC",
+			XLF = "XLF";
+
+		private List<string> symbols = new List<string> { BOND, GS, MS, WFC, XLF };
+
 		private object thisLock = new object();
 		private Market market;
-		private string symbol;
-		private SortedDictionary<int, int> buys;
-		private SortedDictionary<int, int> sells;
 
+		private Dictionary<string, SortedDictionary<int, int>> buys;
+		private Dictionary<string, SortedDictionary<int, int>> sells;
+		private Dictionary<string, double> fairs;
 
-		public EquityMarketMaker(Market market_, string symbol_)
+		public EquityMarketMaker(Market market_)
 		{
 			market = market_;
-			symbol = symbol_;
-			buys = new SortedDictionary<int, int>();
-			sells = new SortedDictionary<int, int>();
+			buys = new Dictionary<string, SortedDictionary<int, int>>();
+			sells = new Dictionary<string, SortedDictionary<int, int>>();
+			fairs = new Dictionary<string, double>();
+
+			foreach (string sym in symbols)
+			{
+				buys[sym] = new SortedDictionary<int, int>();
+				sells[sym] = new SortedDictionary<int, int>();
+				fairs[sym] = 0.0; // watch out, check this
+			}
+
 			market.Book += Market_Book;
 		}
 
@@ -31,16 +48,31 @@ namespace etc
 
 		private void Recalcluate()
 		{
-
+			foreach (string sym in symbols)
+			{
+				try
+				{
+					int bid = buys[sym].Last().Key;
+					int ask = sells[sym].First().Key;
+					fairs[sym] = ((double)bid + ask) / 2.0;
+				}
+				catch (InvalidOperationException)
+				{
+					// no bids / no asks
+					fairs[sym] = 0.0;
+				}
+			}
 		}
 
 		private void Market_Book(object sender, BookEventArgs e)
 		{
 			lock (thisLock)
 			{
-				if (e.symbol != symbol) return;
-				buys = e.buys;
-				sells = e.sells;
+				if (buys.ContainsKey(e.symbol))
+				{
+					buys[e.symbol] = e.buys;
+					sells[e.symbol] = e.sells;
+				}
 			}
 		}
 	}

@@ -138,7 +138,6 @@ namespace etc
 			string msg;
 			while ((msg = reader.ReadLine()) != null)
 			{
-				LogReceive(msg);
 				string[] toks = msg.Split(' ');
 				try
 				{
@@ -146,6 +145,7 @@ namespace etc
 					{
 						case "HELLO":
 							{
+								LogReceive(msg);
 								var args = new HelloEventArgs();
 								args.cash = int.Parse(toks[1]);
 								args.positions = new Dictionary<string, int>();
@@ -160,6 +160,7 @@ namespace etc
 							}
 						case "OPEN":
 							{
+								LogReceive(msg);
 								var args = new OpenEventArgs();
 								args.symbols = new List<string>();
 								for (int i = 1; i < toks.Length; ++i)
@@ -172,6 +173,7 @@ namespace etc
 							}
 						case "CLOSE":
 							{
+								LogReceive(msg);
 								var args = new CloseEventArgs();
 								args.symbols = new List<string>();
 								for (int i = 1; i < toks.Length; ++i)
@@ -184,6 +186,7 @@ namespace etc
 							}
 						case "ERROR":
 							{
+								LogReceive(msg);
 								var args = new ErrorEventArgs();
 								args.message = msg.Substring(6);
 								var handler = Error;
@@ -226,6 +229,7 @@ namespace etc
 							}
 						case "ACK":
 							{
+								LogReceive(msg);
 								var args = new AckEventArgs();
 								args.id = int.Parse(toks[1]);
 								var handler = Ack;
@@ -234,6 +238,7 @@ namespace etc
 							}
 						case "REJECT":
 							{
+								LogReceive(msg);
 								var args = new RejectEventArgs();
 								args.id = int.Parse(toks[1]);
 								string[] remainingToks = new string[toks.Length - 2];
@@ -245,6 +250,7 @@ namespace etc
 							}
 						case "FILL":
 							{
+								LogReceive(msg);
 								var args = new FillEventArgs();
 								args.id = int.Parse(toks[1]);
 								args.symbol = toks[2];
@@ -257,6 +263,7 @@ namespace etc
 							}
 						case "OUT":
 							{
+								LogReceive(msg);
 								var args = new OutEventArgs();
 								args.id = int.Parse(toks[1]);
 								var handler = Out;
