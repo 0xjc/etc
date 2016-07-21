@@ -129,7 +129,8 @@ namespace etc
 			positions = new ConcurrentDictionary<string, int>();
 			lastPositionsDump = DateTime.Now;
 			pendingConverts = new Dictionary<int, ConvertOrder>();
-			posDumpFile = File.AppendText(posDumpFilename);
+			File.Delete(posDumpFilename);
+			posDumpFile = File.CreateText(posDumpFilename);
 		}
 
 		private void LogSend(string msg)
@@ -365,7 +366,7 @@ namespace etc
 				{
 					LogError("Exn in Receive processing: " + ex.Message);
 				}
-				if (DateTime.Now - lastPositionsDump > TimeSpan.FromSeconds(5.0))
+				if (DateTime.Now - lastPositionsDump > TimeSpan.FromSeconds(1.0))
 				{
 					DumpCashAndPositions();
 				}
