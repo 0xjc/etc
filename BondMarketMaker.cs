@@ -10,8 +10,6 @@ namespace etc
     {
 		private object thisLock = new object();
         public bool canTradeBond;
-        public int cash;
-        public int bond;
         public int buyOrder;
         public int sellOrder;
 
@@ -27,8 +25,6 @@ namespace etc
         {
             market = market_;
             canTradeBond = false;
-            cash = 0;
-            bond = 0;
             buyOrder = 0;
             sellOrder = 0;
             orderDir = new Dictionary<int, Direction>();
@@ -48,23 +44,24 @@ namespace etc
             {
                 if (canTradeBond)
                 {
-                    if (bond > 80 && sellOrder < 90)
+                    int bondPosition = market.GetPosition(bondTicker);
+                    if (bondPosition > 80 && sellOrder < 90)
                     {
                         AddOrder(bondTicker, Direction.SELL, 1000, 5);
                     }
-                    if (bond < -80 && buyOrder < 90)
+                    if (bondPosition < -80 && buyOrder < 90)
                     {
                         AddOrder(bondTicker, Direction.BUY, 1000, 5);
 
                     }
 
-                    if (bond + buyOrder < 85 && buyOrder < 80)
+                    if (bondPosition + buyOrder < 85 && buyOrder < 80)
                     {
-                        AddOrder(bondTicker, Direction.BUY, 999, 97 - (bond + buyOrder));
+                        AddOrder(bondTicker, Direction.BUY, 999, 97 - (bondPosition + buyOrder));
                     }
-                    if (bond - sellOrder > -85 && sellOrder < 80)
+                    if (bondPosition - sellOrder > -85 && sellOrder < 80)
                     {
-                        AddOrder(bondTicker, Direction.SELL, 1001, 97 + (bond - sellOrder));
+                        AddOrder(bondTicker, Direction.SELL, 1001, 97 + (bondPosition - sellOrder));
                     }
 
 
@@ -123,14 +120,10 @@ namespace etc
 				{
 					if (e.dir == Direction.BUY)
 					{
-						cash -= e.price * e.size;
-						bond += e.size;
                         buyOrder -= e.size;
 					}
 					else
 					{
-						cash += e.price * e.size;
-						bond -= e.size;
                         sellOrder -= e.size;
 					}
 				}
@@ -175,8 +168,6 @@ namespace etc
 		{
 			lock (thisLock)
 			{
-				cash = e.cash;
-                bond = e.positions[bondTicker];
 			}
         }
     }
