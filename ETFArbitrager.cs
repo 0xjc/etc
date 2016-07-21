@@ -164,7 +164,7 @@ namespace etc
 
 				CancelPrevOrder("XLF");
 
-				Console.Write(string.Format("ETF: I think (Actual XLF) - (Synthetic XLF) = {0}", diff));
+				Console.WriteLine(string.Format("ETF: Think (Actual XLF) - (Synthetic XLF) = {0}", diff));
 				if (diff > 8.0)
 				{
 					prevOrder["XLF"] = market.Add("XLF", Direction.SELL, (int)Math.Round(xlf.fair), 10);
