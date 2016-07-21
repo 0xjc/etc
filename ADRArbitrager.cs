@@ -13,10 +13,6 @@ namespace etc
         public static string adrTicker = "VALE";
         public static string ordTicker = "VALBZ";
 
-        public int cash;
-        public int adr;
-        public int ord;
-
         public int adrBuyOrderID;
         public int adrSellOrderID;
         public int adrAsk;
@@ -29,9 +25,6 @@ namespace etc
         public ADRArbitrager(Market market_)
         {
             market = market_;
-            adr = 0;
-            ord = 0;
-            cash = 0;
             adrBuyOrderID = -1;
             adrSellOrderID = -1;
             adrAsk = adrBid = ordAsk = ordBid = -1;
@@ -51,6 +44,8 @@ namespace etc
             {
                 if (canTrade)
                 {
+                    int adr = market.GetPosition(adrTicker); 
+                    int ord = market.GetPosition(ordTicker);
                     if (Math.Abs(adr) >= 9)
                     {
                         CancelAllOrder();
@@ -110,6 +105,7 @@ namespace etc
                     ordBid = e.buys.Last().Key;
                     ordAsk = e.sells.First().Key;
 
+                    int adr = market.GetPosition(adrTicker); 
                     //Console.WriteLine("I am adding buy order.   " + "adr = " + adr + "I am going to buy " + Math.Min(10 - adr, 10) + "shares.");
                     adrBuyOrderID = market.Add(adrTicker, Direction.BUY, ordBid - 3, Math.Max(0, Math.Min(10 - adr, 6)));
                     //Console.WriteLine("I am adding sell order.   " + "adr = " + adr + "I am going to sell " + Math.Min(10 + adr, 10) + "shares.");
@@ -133,19 +129,9 @@ namespace etc
                 int id = e.id;
                     if (e.dir == Direction.BUY)
                     {
-                        cash -= e.price * e.size;
-                        if (e.symbol == adrTicker)
-                            adr += e.size;
-                        else if(e.symbol == ordTicker)
-                            ord += e.size;
                     }
                     else
                     {
-                        cash += e.price * e.size;
-                        if (e.symbol == adrTicker)
-                            adr -= e.size;
-                        else if(e.symbol == ordTicker)
-                            ord -= e.size;
                     }
                 
             }
@@ -179,9 +165,6 @@ namespace etc
         {
             lock (thisLock)
             {
-                cash = e.cash;
-                adr = e.positions[adrTicker];
-                ord = e.positions[ordTicker];
             }
         }
     }
