@@ -48,24 +48,46 @@ namespace etc
             {
                 if (canTradeBond)
                 {
-                    if (bond+buyOrder < 65)
+                    if (bond+buyOrder < 95)
                     {
-                        AddOrder(bondTicker, Direction.BUY, 999, 30);
+                        AddOrder(bondTicker, Direction.BUY, 999, 95 - (bond + buyOrder));
                     }
                     else if (bond > 80)
                     {
                         AddOrder(bondTicker, Direction.SELL, 1000, 5);
                     }
 
-                    if (bond-sellOrder > -65)
+                    if (bond-sellOrder > -95)
                     {
-                        AddOrder(bondTicker, Direction.SELL, 1001, 30);
+                        AddOrder(bondTicker, Direction.SELL, 1001, 95 + (bond - sellOrder));
                     }
                     else if (bond < -80)
                     {
                         AddOrder(bondTicker, Direction.BUY, 1000, 5);
                     }					
                 }
+            }
+        }
+
+        void AddOrder(string symbol, Direction dir, int price, int size)
+        {
+            lock (thisLock)
+            {
+                int orderID = market.Add(symbol, dir, price, size);
+                orderDir.Add(orderID, dir);
+                orderPrice.Add(orderID, price);
+                orderSize.Add(orderID, size);
+
+                if (dir == Direction.BUY)
+                {
+                    buyOrder += size;
+                }
+                else
+                {
+                    sellOrder += size;
+                }
+
+                Task.Delay(10).Wait();
             }
         }
 
@@ -128,29 +150,7 @@ namespace etc
 				}
 			}
         }
-
-        void AddOrder(string symbol, Direction dir, int price, int size)
-		{
-            lock (thisLock)
-            {
-                int orderID = market.Add(symbol, dir, price, size);
-                orderDir.Add(orderID, dir);
-                orderPrice.Add(orderID, price);
-                orderSize.Add(orderID, size);
-
-                if (dir == Direction.BUY)
-                {
-                    buyOrder += size;
-                }
-                else
-                {
-                    sellOrder += size;
-                }
-
-                Task.Delay(10).Wait();
-            }
-        }
-
+        
         void market_Close(object sender, CloseEventArgs e)
 		{
 			lock (thisLock)
