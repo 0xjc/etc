@@ -420,10 +420,10 @@ namespace etc
 			int id = Interlocked.Increment(ref currentID);
 			string msg = string.Format("CONVERT {0} {1} {2} {3}", id, symbol.ToUpper(), dir, size);
 
+			pendingConverts.Add(id, new ConvertOrder(symbol, dir, size));
 			writer.WriteLine(msg);
 			writer.Flush();
 			LogSend(msg);
-			pendingConverts.Add(id, new ConvertOrder(symbol, dir, size));
 			return id;
 		}
 
