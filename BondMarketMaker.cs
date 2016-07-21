@@ -44,6 +44,7 @@ namespace etc
                 {
                     AddOrder("BOND", Direction.BUY, 999, 20);
                     AddOrder("BOND", Direction.SELL, 1001, 20);
+					Task.Delay(10).Wait();
                 }
             }
         }
