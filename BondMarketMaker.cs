@@ -8,6 +8,7 @@ namespace etc
 {
     class BondMarketMaker
     {
+		private object thisLock = new object();
         public bool canTradeBond;
         public int cash;
         public int bond;
@@ -65,65 +66,80 @@ namespace etc
 
         void market_Fill(object sender, FillEventArgs e)
         {
-            int id = e.id;
-            if (e.symbol == "BOND")
-            {
-                if (e.dir == Direction.BUY)
-                {
-                    cash -= e.price * e.size;
-                    bond += e.size;
-                }
-                else
-                {
-                    cash += e.price * e.size;
-                    bond -= e.size;
-                }
-            }
-            if (orderDir.ContainsKey(id))
-            {
-                Direction dir = orderDir[id];
-                int price = orderPrice[id];
-                int size = orderSize[id];
-                size -= e.size;
-                if (size>=0)
-                {
-                    orderSize.Remove(id);
-                    orderSize.Add(id, size);
-                }
-                else
-                {
-                    orderDir.Remove(id);
-                    orderPrice.Remove(id);
-                    orderSize.Remove(id);
-                }
-            }
+			lock (thisLock)
+			{
+				int id = e.id;
+				if (e.symbol == "BOND")
+				{
+					if (e.dir == Direction.BUY)
+					{
+						cash -= e.price * e.size;
+						bond += e.size;
+					}
+					else
+					{
+						cash += e.price * e.size;
+						bond -= e.size;
+					}
+				}
+				if (orderDir.ContainsKey(id))
+				{
+					Direction dir = orderDir[id];
+					int price = orderPrice[id];
+					int size = orderSize[id];
+					size -= e.size;
+					if (size >= 0)
+					{
+						orderSize.Remove(id);
+						orderSize.Add(id, size);
+					}
+					else
+					{
+						orderDir.Remove(id);
+						orderPrice.Remove(id);
+						orderSize.Remove(id);
+					}
+				}
+			}
         }
 
         void AddOrder(string symbol, Direction dir, int price, int size)
-        {
-            market.Add(orderID, symbol, dir, price, size);
-            orderDir.Add(orderID, dir);
-            orderPrice.Add(orderID, price);
-            orderSize.Add(orderID, size);
-            orderID++;
+		{
+			lock (thisLock)
+			{
+				market.Add(orderID, symbol, dir, price, size);
+				orderDir.Add(orderID, dir);
+				orderPrice.Add(orderID, price);
+				orderSize.Add(orderID, size);
+				orderID++;
 
-            Task.Delay(10).Wait();
+				Task.Delay(10).Wait();
+			}
         }
 
         void market_Close(object sender, CloseEventArgs e)
-        {
-            canTradeBond = !e.symbols.Contains("BOND");
+		{
+			lock (thisLock)
+			{
+				canTradeBond = !e.symbols.Contains("BOND");
+			}
         }
 
         void market_Open(object sender, OpenEventArgs e)
-        {
-            canTradeBond = e.symbols.Contains("BOND");
+		{
+			lock (thisLock)
+			{
+				canTradeBond = e.symbols.Contains("BOND");
+			}
         }
 
         void market_GotHello(object sender, HelloEventArgs e)
-        {
-            cash = e.cash;
-            bond = e.positions["BOND"];
+		{
+			lock (thisLock)
+			{
+				cash = e.cash;
+				bond = e.positions["BOND"];
+			}
         }
     }
 }

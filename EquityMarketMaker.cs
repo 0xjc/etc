@@ -15,7 +15,8 @@ namespace etc
 
 		public EquityMarketMaker(Market market_, string symbol_)
 		{
-
+			market = market_;
+			symbol = symbol_;
 			buys = new SortedDictionary<int, int>();
 			sells = new SortedDictionary<int, int>();
 			market.Book += Market_Book;
@@ -23,6 +24,8 @@ namespace etc
 
 		private void Market_Book(object sender, BookEventArgs e)
 		{
+			if (e.symbol != symbol) return;
+			buys = e.
 			throw new NotImplementedException();
 		}
 	}
