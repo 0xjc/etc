@@ -52,18 +52,18 @@ namespace etc
                     {
                         AddOrder(bondTicker, Direction.BUY, 999, 30);
                     }
-                    else
+                    else if (bond > 80)
                     {
-                        AddOrder(bondTicker, Direction.BUY, 1000, 5);
+                        AddOrder(bondTicker, Direction.SELL, 1000, 5);
                     }
 
                     if (bond-sellOrder > -65)
                     {
                         AddOrder(bondTicker, Direction.SELL, 1001, 30);
                     }
-                    else
+                    else if (bond < -80)
                     {
-                        AddOrder(bondTicker, Direction.SELL, 1000, 5);
+                        AddOrder(bondTicker, Direction.BUY, 1000, 5);
                     }					
                 }
             }
