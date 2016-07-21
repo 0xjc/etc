@@ -118,7 +118,7 @@ namespace etc
 			}
 		}
 
-		public void Hello() { writer.WriteLine("HELLO AMPERE"); }
+		public void Hello() { writer.WriteLine("HELLO AMPERE"); writer.Flush(); }
 		public void Add(int id, string symbol, Direction dir, int price, int size) { }
 		public void Convert(int id, string symbol, Direction dir, int size) { }
 		public void Cancel(int id) { }
