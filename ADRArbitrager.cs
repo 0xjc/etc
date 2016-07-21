@@ -51,13 +51,13 @@ namespace etc
             {
                 if (canTrade)
                 {
-                    if (Math.Abs(adr) == 10)
+                    if (Math.Abs(adr) >= 9)
                     {
                         CancelAllOrder();
                         Direction dir = Direction.BUY;
-                        if (adr == 10)
+                        if (adr > 0)
                             dir = Direction.SELL;
-                        market.Convert(adrTicker, dir, 10);
+                        market.Convert(adrTicker, dir, Math.Abs(adr));
                         ord = adr;
                         adr = 0;
                         
@@ -110,10 +110,10 @@ namespace etc
                     ordBid = e.buys.Last().Key;
                     ordAsk = e.sells.First().Key;
 
-                    Console.WriteLine("I am adding buy order.   " + "adr = " + adr + "I am going to buy " + Math.Min(10 - adr, 10) + "shares.");
-                    adrBuyOrderID = market.Add(adrTicker, Direction.BUY, ordBid - 3, Math.Min(10 - adr, 10));
-                    Console.WriteLine("I am adding sell order.   " + "adr = " + adr + "I am going to sell " + Math.Min(10 + adr, 10) + "shares.");
-                    adrSellOrderID = market.Add(adrTicker, Direction.SELL, ordAsk + 3, Math.Min(10 + adr, 10));
+                    //Console.WriteLine("I am adding buy order.   " + "adr = " + adr + "I am going to buy " + Math.Min(10 - adr, 10) + "shares.");
+                    adrBuyOrderID = market.Add(adrTicker, Direction.BUY, ordBid - 3, Math.Max(0, Math.Min(10 - adr, 6)));
+                    //Console.WriteLine("I am adding sell order.   " + "adr = " + adr + "I am going to sell " + Math.Min(10 + adr, 10) + "shares.");
+                    adrSellOrderID = market.Add(adrTicker, Direction.SELL, ordAsk + 3, Math.Max(0, Math.Min(10 + adr, 6)));
                 }
             }
             if (ticker == adrTicker)
