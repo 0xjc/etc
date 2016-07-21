@@ -282,6 +282,10 @@ namespace etc
 									{
 										int sign = (conv.dir == Direction.BUY) ? 1 : -1;
 										int num = conv.size / 10;
+										if (conv.size % 10 != 0)
+										{
+											LogError("XLF Conversion with size % 10 != 0");
+										}
 										positions["XLF"] += sign * num * 10;
 										positions["BOND"] -= sign * num * 3;
 										positions["GS"] -= sign * num * 2;
