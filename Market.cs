@@ -136,16 +136,26 @@ namespace etc
 					switch (toks[0].ToUpper())
 					{
 						case "HELLO":
-							var args = new HelloEventArgs();
-							args.cash = int.Parse(toks[1]);
-							args.positions = new Dictionary<string, int>();
-							for (int i = 2; i < toks.Length; ++i)
 							{
-								string[] symAndPosn = toks[i].Split();
-								args.positions.Add(symAndPosn[0], int.Parse(symAndPosn[1]));
+								var args = new HelloEventArgs();
+								args.cash = int.Parse(toks[1]);
+								args.positions = new Dictionary<string, int>();
+								for (int i = 2; i < toks.Length; ++i)
+								{
+									string[] symAndPosn = toks[i].Split(':');
+									args.positions.Add(symAndPosn[0], int.Parse(symAndPosn[1]));
+								}
+								var handler = GotHello;
+								if (handler != null) handler(this, args);
+								break;
 							}
-							GotHello?.Invoke(this, args);
-							break;
+						case "BOOK":
+							{
+								var args = new BookEventArgs();
+								args.symbol = toks[1];
+								if (toks[2] != "BUY") throw new Exception("toks[2] is not BUY");
+								break;
+							}
 					}
 				}
 				catch (Exception ex)
