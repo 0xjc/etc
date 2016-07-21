@@ -91,7 +91,7 @@ namespace etc
                 market.Cancel(adrSellOrderID);
                 adrSellOrderID = -1;
             }
-            Task.Delay(100).Wait();
+            //Task.Delay(100).Wait();
         }
 
         void market_Book(object sender, BookEventArgs e)
