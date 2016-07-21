@@ -12,6 +12,8 @@ namespace etc
         public bool canTradeBond;
         public int cash;
         public int bond;
+        public int buyOrder;
+        public int sellOrder;
 
         public Dictionary<int, Direction> orderDir;
         public Dictionary<int, int> orderPrice;
@@ -27,6 +29,8 @@ namespace etc
             canTradeBond = false;
             cash = 0;
             bond = 0;
+            buyOrder = 0;
+            sellOrder = 0;
             orderDir = new Dictionary<int, Direction>();
             orderPrice = new Dictionary<int, int>();
             orderSize = new Dictionary<int, int>();
@@ -38,28 +42,48 @@ namespace etc
             market.Open += market_Open;
             market.Close += market_Close;
             market.Fill += market_Fill;
+            market.Ack += market_Ack;
 
             while (true)
             {
                 if (canTradeBond)
                 {
-                    if (bond <= 80)
+                    if (bond+buyOrder < 65)
                     {
-                        AddOrder(bondTicker, Direction.BUY, 999, 20);
+                        AddOrder(bondTicker, Direction.BUY, 999, 30);
                     }
                     else
                     {
                         AddOrder(bondTicker, Direction.BUY, 1000, 5);
                     }
 
-                    if (bond >= -80)
+                    if (bond-sellOrder > -65)
                     {
-                        AddOrder(bondTicker, Direction.SELL, 1001, 20);
+                        AddOrder(bondTicker, Direction.SELL, 1001, 30);
                     }
                     else
                     {
                         AddOrder(bondTicker, Direction.SELL, 1000, 5);
                     }					
+                }
+            }
+        }
+
+        void market_Ack(object sender, AckEventArgs e)
+        {
+            lock (thisLock)
+            {
+                int id = e.id;
+                if (orderDir.ContainsKey(id))
+                {
+                    if (orderDir[id] == Direction.BUY)
+                    {
+                        buyOrder += orderSize[id];
+                    }
+                    else
+                    {
+                        sellOrder += orderSize[id];
+                    }
                 }
             }
         }
@@ -75,11 +99,13 @@ namespace etc
 					{
 						cash -= e.price * e.size;
 						bond += e.size;
+                        buyOrder -= e.size;
 					}
 					else
 					{
 						cash += e.price * e.size;
 						bond -= e.size;
+                        sellOrder -= e.size;
 					}
 				}
 				if (orderDir.ContainsKey(id))
