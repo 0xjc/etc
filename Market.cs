@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace etc
@@ -101,6 +102,9 @@ namespace etc
 		private NetworkStream stream;
 		private StreamReader reader;
 		private StreamWriter writer;
+
+		const int INVALID_ID = -1;
+		private int currentID = 0;
 
 		public Market(NetworkStream stream_)
 		{
@@ -277,40 +281,44 @@ namespace etc
 			LogSend(msg);
 		}
 
-		public void Add(int id, string symbol, Direction dir, int price, int size)
+		public int Add(string symbol, Direction dir, int price, int size)
 		{
 			if (size < 0)
 			{
 				LogError("ADD with negative size attempted");
-				return;
+				return INVALID_ID;
 			}
 
 			if (price < 0)
 			{
 				LogError("ADD with negative price attempted");
-				return;
+				return INVALID_ID;
 			}
 
+			int id = Interlocked.Increment(ref currentID);
 			string msg = string.Format("ADD {0} {1} {2} {3} {4}", id, symbol.ToUpper(), dir, price, size);
 
 			writer.WriteLine(msg);
 			writer.Flush();
 			LogSend(msg);
+			return id;
 		}
 
-		public void Convert(int id, string symbol, Direction dir, int size)
+		public int Convert(string symbol, Direction dir, int size)
 		{
 			if (size < 0)
 			{
 				LogError("CONVERT with negative size attempted");
-				return;
+				return INVALID_ID;
 			}
 
+			int id = Interlocked.Increment(ref currentID);
 			string msg = string.Format("CONVERT {0} {1} {2} {3}", id, symbol.ToUpper(), dir, size);
 
 			writer.WriteLine(msg);
 			writer.Flush();
 			LogSend(msg);
+			return id;
 		}
 
 		public void Cancel(int id)
