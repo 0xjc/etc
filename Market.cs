@@ -154,6 +154,19 @@ namespace etc
 								var args = new BookEventArgs();
 								args.symbol = toks[1];
 								if (toks[2] != "BUY") throw new Exception("toks[2] is not BUY");
+								int i;
+								for (i = 3; i < toks.Length; ++i)
+								{
+									if (toks[i].ToUpper() == "SELL") { break; }
+									string[] priceAndSize = toks[i].Split(':');
+									args.buys.Add(int.Parse(priceAndSize[0]), int.Parse(priceAndSize[1]));
+								}
+								++i;
+								for (; i < toks.Length; ++i)
+								{
+									string[] priceAndSize = toks[i].Split(':');
+									args.sells.Add(int.Parse(priceAndSize[0]), int.Parse(priceAndSize[1]));
+								}
 								break;
 							}
 					}
