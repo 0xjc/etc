@@ -34,6 +34,7 @@ namespace etc
             cash = 0;
             adrBuyOrderID = -1;
             adrSellOrderID = -1;
+            adrAsk = adrBid = ordAsk = ordBid = -1;
             canTrade = false;
         }
 
@@ -67,13 +68,13 @@ namespace etc
                         if (ord > 0)
                         {
                             int orderId = market.Add(ordTicker, Direction.SELL, ordBid ,1);
-                            Task.Delay(100).Wait();
+                            Task.Delay(200).Wait();
                             market.Cancel(orderId);
                         }
                         else
                         {
                             int orderId = market.Add(ordTicker, Direction.BUY, ordAsk, 1);
-                            Task.Delay(100).Wait();
+                            Task.Delay(200).Wait();
                             market.Cancel(orderId);
                         }
                     }

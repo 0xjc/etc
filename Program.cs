@@ -21,8 +21,8 @@ namespace etc
 
 			market.Hello();
 
-			//var bonds = new BondMarketMaker(market);
-			//Task.Run(() => { bonds.Main(); });
+			var bonds = new BondMarketMaker(market);
+			Task.Run(() => { bonds.Main(); });
 
             var adr = new ADRArbitrager(market);
             Task.Run(() => { adr.Main(); });
