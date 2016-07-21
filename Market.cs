@@ -154,6 +154,38 @@ namespace etc
 								if (handler != null) handler(this, args);
 								break;
 							}
+						case "OPEN":
+							{
+								var args = new OpenEventArgs();
+								args.symbols = new List<string>();
+								for (int i = 1; i < toks.Length; ++i)
+								{
+									args.symbols.Add(toks[i]);
+								}
+								var handler = Open;
+								if (handler != null) handler(this, args);
+								break;
+							}
+						case "CLOSE":
+							{
+								var args = new CloseEventArgs();
+								args.symbols = new List<string>();
+								for (int i = 1; i < toks.Length; ++i)
+								{
+									args.symbols.Add(toks[i]);
+								}
+								var handler = Close;
+								if (handler != null) handler(this, args);
+								break;
+							}
+						case "ERROR":
+							{
+								var args = new ErrorEventArgs();
+								args.message = msg.Substring(6);
+								var handler = Error;
+								if (handler != null) handler(this, args);
+								break;
+							}
 						case "BOOK":
 							{
 								var args = new BookEventArgs();
