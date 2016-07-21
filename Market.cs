@@ -16,62 +16,62 @@ namespace etc
 
 	public class HelloEventArgs : EventArgs
 	{
-		int cash;
-		Dictionary<string, int> positions; // key = symbol, value = position
+		public int cash;
+		public Dictionary<string, int> positions; // key = symbol, value = position
 	}
 
 	public class OpenEventArgs : EventArgs
 	{
-		List<string> symbols;
+		public List<string> symbols;
 	}
 
 	public class CloseEventArgs : EventArgs
 	{
-		List<string> symbols;
+		public List<string> symbols;
 	}
 
 	public class ErrorEventArgs : EventArgs
 	{
-		string message;
+		public string message;
 	}
 
 	public class BookEventArgs : EventArgs
 	{
-		string symbol;
-		SortedDictionary<int, int> buys; // key = price, value = quantity
-		SortedDictionary<int, int> sells;
+		public string symbol;
+		public SortedDictionary<int, int> buys; // key = price, value = quantity
+		public SortedDictionary<int, int> sells;
 	}
 
 	public class TradeEventArgs : EventArgs
 	{
-		string symbol;
-		int price;
-		int size;
+		public string symbol;
+		public int price;
+		public int size;
 	}
 
 	public class AckEventArgs : EventArgs
 	{
-		int id;
+		public int id;
 	}
 
 	public class RejectEventArgs : EventArgs
 	{
-		int id;
-		string message;
+		public int id;
+		public string message;
 	}
 
 	public class FillEventArgs : EventArgs
 	{
-		int id;
-		string symbol;
-		Direction dir;
-		int price;
-		int size;
+		public int id;
+		public string symbol;
+		public Direction dir;
+		public int price;
+		public int size;
 	}
 
 	public class OutEventArgs : EventArgs
 	{
-		int id;
+		public int id;
 	}
 
 	class Market
@@ -109,18 +109,105 @@ namespace etc
 			writer = new StreamWriter(stream, Encoding.ASCII);
 		}
 
+		private void LogSend(string msg)
+		{
+			Console.WriteLine("SEND: " + msg);
+		}
+
+		private void LogReceive(string msg)
+		{
+			Console.WriteLine("RECV: " + msg);
+		}
+
+		private void LogError(string msg)
+		{
+			Console.Error.WriteLine("ERROR: " + msg);
+		}
+
 		public void ReceiveLoop()
 		{
-			string line;
-			while ((line = reader.ReadLine()) != null)
+			string msg;
+			while ((msg = reader.ReadLine()) != null)
 			{
-				Console.WriteLine("Got line: " + line);
+				LogReceive(msg);
+				string[] toks = msg.Split(' ');
+				try
+				{
+					switch (toks[0].ToUpper())
+					{
+						case "HELLO":
+							var args = new HelloEventArgs();
+							args.cash = int.Parse(toks[1]);
+							args.positions = new Dictionary<string, int>();
+							for (int i = 2; i < toks.Length; ++i)
+							{
+								string[] symAndPosn = toks[i].Split();
+								args.positions.Add(symAndPosn[0], int.Parse(symAndPosn[1]));
+							}
+							GotHello?.Invoke(this, args);
+							break;
+					}
+				}
+				catch (Exception ex)
+				{
+					LogError("Exn in Receive processing: " + ex.Message);
+				}
 			}
 		}
 
-		public void Hello() { writer.WriteLine("HELLO AMPERE"); writer.Flush(); }
-		public void Add(int id, string symbol, Direction dir, int price, int size) { }
-		public void Convert(int id, string symbol, Direction dir, int size) { }
-		public void Cancel(int id) { }
+		public void Hello()
+		{
+			string msg = "HELLO AMPERE";
+
+			writer.WriteLine(msg);
+			writer.Flush();
+			LogSend(msg);
+		}
+
+		public void Add(int id, string symbol, Direction dir, int price, int size)
+		{
+			if (size < 0)
+			{
+				LogError("ADD with negative size attempted");
+				return;
+			}
+
+			if (price < 0)
+			{
+				LogError("ADD with negative price attempted");
+				return;
+			}
+
+			string msg = string.Format("ADD {0} {1} {2} {3} {4}", id, symbol.ToUpper(), dir, price, size);
+
+			writer.WriteLine(msg);
+			writer.Flush();
+			LogSend(msg);
+		}
+
+		public void Convert(int id, string symbol, Direction dir, int size)
+		{
+			if (size < 0)
+			{
+				LogError("CONVERT with negative size attempted");
+				return;
+			}
+
+			string msg = string.Format("CONVERT {0} {1} {2} {3}", id, symbol.ToUpper(), dir, size);
+
+			writer.WriteLine(msg);
+			writer.Flush();
+			LogSend(msg);
+		}
+
+		public void Cancel(int id)
+		{
+			string msg = string.Format("CANCEL {0}", id);
+			Console.WriteLine("SEND: " + msg);
+
+			writer.WriteLine(msg);
+			writer.Flush();
+			LogSend(msg);
+		}
 	}
 }
