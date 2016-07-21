@@ -112,7 +112,7 @@ namespace etc
                     //Console.WriteLine("I am adding sell order.   " + "adr = " + adr + "I am going to sell " + Math.Min(10 + adr, 10) + "shares.");
                     adrSellOrderID = market.Add(adrTicker, Direction.SELL, ordAsk + 2, Math.Max(0, Math.Min(10 + adr, 6)));
 
-                    Task.Delay(200).Wait();
+                    //Task.Delay(200).Wait();
                 }
             }
             if (ticker == adrTicker)
