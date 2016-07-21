@@ -46,32 +46,32 @@ namespace etc
                 {
                     int adr = market.GetPosition(adrTicker); 
                     int ord = market.GetPosition(ordTicker);
-                    if (Math.Abs(adr) >= 9)
+                    if (Math.Abs(adr) >= 10)
                     {
                         CancelAllOrder();
                         Direction dir = Direction.BUY;
                         if (adr > 0)
                             dir = Direction.SELL;
                         market.Convert(adrTicker, dir, Math.Abs(adr));
-                        ord = adr;
+                        ord += adr;
                         adr = 0;
                         
                     }
 
                     if (ord != 0)
                     {
+                        Direction dir = Direction.BUY;
                         if (ord > 0)
                         {
-                            int orderId = market.Add(ordTicker, Direction.SELL, ordBid ,1);
-                            Task.Delay(200).Wait();
-                            market.Cancel(orderId);
+                            dir = Direction.SELL;
                         }
                         else
                         {
-                            int orderId = market.Add(ordTicker, Direction.BUY, ordAsk, 1);
-                            Task.Delay(200).Wait();
-                            market.Cancel(orderId);
+                            dir = Direction.BUY;
                         }
+                        int orderId = market.Add(ordTicker, dir, ordBid, 1);
+                        Task.Delay(200).Wait();
+                        market.Cancel(orderId);
                     }
 
                     Task.Delay(100).Wait();
@@ -91,6 +91,7 @@ namespace etc
                 market.Cancel(adrSellOrderID);
                 adrSellOrderID = -1;
             }
+            Task.Delay(100).Wait();
         }
 
         void market_Book(object sender, BookEventArgs e)
