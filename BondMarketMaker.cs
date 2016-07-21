@@ -12,7 +12,6 @@ namespace etc
         public bool canTradeBond;
         public int cash;
         public int bond;
-        public int orderID;
 
         public Dictionary<int, Direction> orderDir;
         public Dictionary<int, int> orderPrice;
@@ -20,10 +19,11 @@ namespace etc
 
         private Market market;
 
+        public static string bondTicker = "BOND";
+
         public BondMarketMaker(Market market_)
         {
             market = market_;
-            orderID = 0;
             canTradeBond = false;
             cash = 0;
             bond = 0;
@@ -45,20 +45,20 @@ namespace etc
                 {
                     if (bond <= 80)
                     {
-                        AddOrder("BOND", Direction.BUY, 999, 20);
+                        AddOrder(bondTicker, Direction.BUY, 999, 20);
                     }
                     else
                     {
-                        AddOrder("BOND", Direction.BUY, 1000, 5);
+                        AddOrder(bondTicker, Direction.BUY, 1000, 5);
                     }
 
                     if (bond >= -80)
                     {
-                        AddOrder("BOND", Direction.SELL, 1001, 20);
+                        AddOrder(bondTicker, Direction.SELL, 1001, 20);
                     }
                     else
                     {
-                        AddOrder("BOND", Direction.SELL, 1000, 5);
+                        AddOrder(bondTicker, Direction.SELL, 1000, 5);
                     }					
                 }
             }
@@ -69,7 +69,7 @@ namespace etc
 			lock (thisLock)
 			{
 				int id = e.id;
-				if (e.symbol == "BOND")
+                if (e.symbol == bondTicker)
 				{
 					if (e.dir == Direction.BUY)
 					{
@@ -107,11 +107,10 @@ namespace etc
 		{
 			lock (thisLock)
 			{
-				market.Add(orderID, symbol, dir, price, size);
+				int orderID = market.Add(symbol, dir, price, size);
 				orderDir.Add(orderID, dir);
 				orderPrice.Add(orderID, price);
 				orderSize.Add(orderID, size);
-				orderID++;
 
 				Task.Delay(10).Wait();
 			}
@@ -121,7 +120,7 @@ namespace etc
 		{
 			lock (thisLock)
 			{
-				canTradeBond = !e.symbols.Contains("BOND");
+                canTradeBond = !e.symbols.Contains(bondTicker);
 			}
         }
 
@@ -129,7 +128,7 @@ namespace etc
 		{
 			lock (thisLock)
 			{
-				canTradeBond = e.symbols.Contains("BOND");
+                canTradeBond = e.symbols.Contains(bondTicker);
 			}
         }
 
@@ -138,7 +137,7 @@ namespace etc
 			lock (thisLock)
 			{
 				cash = e.cash;
-				bond = e.positions["BOND"];
+                bond = e.positions[bondTicker];
 			}
         }
     }
