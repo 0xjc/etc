@@ -190,6 +190,8 @@ namespace etc
 							{
 								var args = new BookEventArgs();
 								args.symbol = toks[1];
+								args.buys = new SortedDictionary<int, int>();
+								args.sells = new SortedDictionary<int, int>();
 								if (toks[2] != "BUY") throw new Exception("toks[2] is not BUY");
 								int i;
 								for (i = 3; i < toks.Length; ++i)
