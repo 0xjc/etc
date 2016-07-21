@@ -25,11 +25,11 @@ namespace etc
 			var bonds = new BondMarketMaker(market);
 			Task.Run(() => { bonds.Main(); });
 
-            //var adr = new ADRArbitrager(market);
-            //Task.Run(() => { adr.Main(); });
+			var adr = new ADRArbitrager(market);
+			Task.Run(() => { adr.Main(); });
 
-			//var etf = new ETFArbitrager(market);
-			//Task.Run(() => { etf.Main(); });
+			var etf = new ETFArbitrager(market);
+			Task.Run(() => { etf.Main(); });
 
 			market.ReceiveLoop();
 		}
