@@ -164,11 +164,11 @@ namespace etc
 
 				CancelPrevOrder("XLF");
 
-				if (diff > 10.0)
+				if (diff > 7.0)
 				{
 					prevOrder["XLF"] = market.Add("XLF", Direction.SELL, (int)Math.Round(xlf.fair), 10);
 				}
-				else if (diff < -10.0)
+				else if (diff < -7.0)
 				{
 					prevOrder["XLF"] = market.Add("XLF", Direction.BUY, (int)Math.Round(xlf.fair), 10);
 				}
@@ -180,13 +180,13 @@ namespace etc
 			lock (thisLock)
 			{
 				int xlfPos = market.GetPosition("XLF");
-				if (xlfPos >= 50)
+				if (xlfPos >= 30)
 				{
-					market.Convert("XLF", Direction.SELL, 50);
+					market.Convert("XLF", Direction.SELL, 30);
 				}
-				else if (xlfPos <= -50)
+				else if (xlfPos <= -30)
 				{
-					market.Convert("XLF", Direction.BUY, 50);
+					market.Convert("XLF", Direction.BUY, 30);
 				}
 			}
 		}
