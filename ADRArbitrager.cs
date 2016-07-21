@@ -111,9 +111,9 @@ namespace etc
                     ordAsk = e.sells.First().Key;
 
                     //Console.WriteLine("I am adding buy order.   " + "adr = " + adr + "I am going to buy " + Math.Min(10 - adr, 10) + "shares.");
-                    adrBuyOrderID = market.Add(adrTicker, Direction.BUY, ordBid - 3, Math.Min(9 - adr, 9));
+                    adrBuyOrderID = market.Add(adrTicker, Direction.BUY, ordBid - 3, Math.Max(0, Math.Min(9 - adr, 5)));
                     //Console.WriteLine("I am adding sell order.   " + "adr = " + adr + "I am going to sell " + Math.Min(10 + adr, 10) + "shares.");
-                    adrSellOrderID = market.Add(adrTicker, Direction.SELL, ordAsk + 3, Math.Min(9 + adr, 9));
+                    adrSellOrderID = market.Add(adrTicker, Direction.SELL, ordAsk + 3, Math.Max(0, Math.Min(9 + adr, 5)));
                 }
             }
             if (ticker == adrTicker)
