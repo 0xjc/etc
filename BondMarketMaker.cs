@@ -46,8 +46,6 @@ namespace etc
                     AddOrder("BOND", Direction.SELL, 1001, 20);
                 }
             }
-
-            return 0;
         }
 
         void market_Fill(object sender, FillEventArgs e)
