@@ -124,6 +124,11 @@ namespace etc
 			Console.Error.WriteLine("ERROR: " + msg);
 		}
 
+		public Direction ParseDirection(string s)
+		{
+			return (Direction)Enum.Parse(typeof(Direction), s);
+		}
+
 		public void ReceiveLoop()
 		{
 			string msg;
@@ -154,6 +159,70 @@ namespace etc
 								var args = new BookEventArgs();
 								args.symbol = toks[1];
 								if (toks[2] != "BUY") throw new Exception("toks[2] is not BUY");
+								int i;
+								for (i = 3; i < toks.Length; ++i)
+								{
+									if (toks[i].ToUpper() == "SELL") { break; }
+									string[] priceAndSize = toks[i].Split(':');
+									args.buys.Add(int.Parse(priceAndSize[0]), int.Parse(priceAndSize[1]));
+								}
+								++i;
+								for (; i < toks.Length; ++i)
+								{
+									string[] priceAndSize = toks[i].Split(':');
+									args.sells.Add(int.Parse(priceAndSize[0]), int.Parse(priceAndSize[1]));
+								}
+								var handler = Book;
+								if (handler != null) handler(this, args);
+								break;
+							}
+						case "TRADE":
+							{
+								var args = new TradeEventArgs();
+								args.symbol = toks[1];
+								args.price = int.Parse(toks[2]);
+								args.size = int.Parse(toks[3]);
+								var handler = Trade;
+								if (handler != null) handler(this, args);
+								break;
+							}
+						case "ACK":
+							{
+								var args = new AckEventArgs();
+								args.id = int.Parse(toks[1]);
+								var handler = Ack;
+								if (handler != null) handler(this, args);
+								break;
+							}
+						case "REJECT":
+							{
+								var args = new RejectEventArgs();
+								args.id = int.Parse(toks[1]);
+								string[] remainingToks = new string[toks.Length - 2];
+								for (int i = 2; i < toks.Length; ++i) remainingToks[i - 2] = toks[i];
+								args.message = string.Join(" ", remainingToks);
+								var handler = Reject;
+								if (handler != null) handler(this, args);
+								break;
+							}
+						case "FILL":
+							{
+								var args = new FillEventArgs();
+								args.id = int.Parse(toks[1]);
+								args.symbol = toks[2];
+								args.dir = ParseDirection(toks[3]);
+								args.price = int.Parse(toks[4]);
+								args.size = int.Parse(toks[5]);
+								var handler = Fill;
+								if (handler != null) handler(this, args);
+								break;
+							}
+						case "OUT":
+							{
+								var args = new OutEventArgs();
+								args.id = int.Parse(toks[1]);
+								var handler = Out;
+								if (handler != null) handler(this, args);
 								break;
 							}
 					}
