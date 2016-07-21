@@ -8,6 +8,66 @@ namespace etc
 {
 	class EquityMarketMaker
 	{
+		class Security
+		{
+			public SortedDictionary<int, int> buys;
+			public SortedDictionary<int, int> sells;
+			public int lastTradePrice; // 0 to start with
+			public DateTime lastTradeTime; // null to start with
+			public double fair; // estimate; 0.0 if unable to calculate (WARNING!)
+			
+			public Security()
+			{
+				buys = new SortedDictionary<int, int>();
+				sells = new SortedDictionary<int, int>();
+			}
+
+			public void RecalcFair()
+			{
+				// weight lastTradePrice and mid based on lastTradeTime recency
+				double lastTradeWeight = 0.0;
+				if (lastTradeTime != null)
+				{
+					TimeSpan diff = DateTime.Now - lastTradeTime;
+					if (diff < TimeSpan.FromSeconds(10.0))
+					{
+						lastTradeWeight = 1.0 - (diff.TotalSeconds / 10.0);
+					}
+				}
+
+				double mid = 0.0;
+				if (buys.Count > 0 && sells.Count > 0)
+				{
+					mid = (buys.Last().Key + sells.First().Key) / 2.0;
+				}
+
+				if (lastTradeWeight == 0.0)
+				{
+					if (mid == 0.0)
+					{
+						if (lastTradeTime != null) fair = lastTradePrice;
+						else fair = 0.0;
+					}
+					else
+					{
+						fair = mid;
+					}
+				}
+				else
+				{
+					if (mid == 0.0)
+					{
+						fair = lastTradePrice;
+					}
+					else
+					{
+						fair = lastTradePrice * lastTradeWeight
+							+ mid * (1.0 - lastTradeWeight);
+					}
+				}
+			}
+		}
+
 		private const string
 			BOND = "BOND",
 			GS = "GS",
@@ -20,46 +80,39 @@ namespace etc
 		private object thisLock = new object();
 		private Market market;
 
-		private Dictionary<string, SortedDictionary<int, int>> buys;
-		private Dictionary<string, SortedDictionary<int, int>> sells;
-		private Dictionary<string, double> fairs;
+		private Dictionary<string, Security> secs;
 
 		public EquityMarketMaker(Market market_)
 		{
 			market = market_;
-			buys = new Dictionary<string, SortedDictionary<int, int>>();
-			sells = new Dictionary<string, SortedDictionary<int, int>>();
-			fairs = new Dictionary<string, double>();
+			secs = new Dictionary<string, Security>();
 
 			foreach (string sym in symbols)
 			{
-				buys[sym] = new SortedDictionary<int, int>();
-				sells[sym] = new SortedDictionary<int, int>();
-				fairs[sym] = 0.0; // watch out, check this
+				secs[sym] = new Security();
 			}
 
 			market.Book += Market_Book;
+			market.Trade += Market_Trade;
 		}
 
 		public void Main()
 		{
-
+			while (true)
+			{
+				Recalculate();
+				Task.Delay(50).Wait();
+			}
 		}
 
-		private void Recalcluate()
+		private void Recalculate()
 		{
-			foreach (string sym in symbols)
+			lock (thisLock)
 			{
-				try
+				foreach (string sym in symbols)
 				{
-					int bid = buys[sym].Last().Key;
-					int ask = sells[sym].First().Key;
-					fairs[sym] = ((double)bid + ask) / 2.0;
-				}
-				catch (InvalidOperationException)
-				{
-					// no bids / no asks
-					fairs[sym] = 0.0;
+					var sec = secs[sym];
+					sec.RecalcFair();
 				}
 			}
 		}
@@ -68,10 +121,24 @@ namespace etc
 		{
 			lock (thisLock)
 			{
-				if (buys.ContainsKey(e.symbol))
+				Security sec;
+				if (secs.TryGetValue(e.symbol, out sec))
 				{
-					buys[e.symbol] = e.buys;
-					sells[e.symbol] = e.sells;
+					sec.buys = e.buys;
+					sec.sells = e.sells;
+				}
+			}
+		}
+
+		private void Market_Trade(object sender, TradeEventArgs e)
+		{
+			lock (thisLock)
+			{
+				Security sec;
+				if (secs.TryGetValue(e.symbol, out sec))
+				{
+					sec.lastTradePrice = e.price;
+					sec.lastTradeTime = DateTime.Now;
 				}
 			}
 		}
