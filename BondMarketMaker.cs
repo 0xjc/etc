@@ -22,6 +22,8 @@ namespace etc
 
         public int Main()
         {
+            market.GotHello += market_GotHello;
+
             while (true)
             {
                 market.Add(order, "BOND", Direction.BUY, 999, 20);
@@ -29,7 +31,13 @@ namespace etc
                 market.Add(order, "BOND", Direction.SELL, 1001, 20);
                 order++;
             }
+
             return 0;
+        }
+
+        void market_GotHello(object sender, HelloEventArgs e)
+        {
+            throw new NotImplementedException();
         }
     }
 }
