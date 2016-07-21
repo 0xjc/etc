@@ -130,7 +130,7 @@ namespace etc
 			while (true)
 			{
 				Readjust();
-				Task.Delay(250).Wait();
+				Task.Delay(500).Wait();
 			}
 		}
 		
