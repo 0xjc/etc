@@ -105,8 +105,8 @@ namespace etc
 		public Market(NetworkStream stream_)
 		{
 			stream = stream_;
-			reader = new StreamReader(stream);
-			writer = new StreamWriter(stream);
+			reader = new StreamReader(stream, Encoding.ASCII);
+			writer = new StreamWriter(stream, Encoding.ASCII);
 		}
 
 		public void ReceiveLoop()
