@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -96,7 +98,27 @@ namespace etc
 		public event FillEventHandler Fill;
 		public event OutEventHandler Out;
 
-		public void Hello() { }
+		private NetworkStream stream;
+		private StreamReader reader;
+		private StreamWriter writer;
+
+		public Market(NetworkStream stream_)
+		{
+			stream = stream_;
+			reader = new StreamReader(stream);
+			writer = new StreamWriter(stream);
+		}
+
+		public void ReceiveLoop()
+		{
+			string line;
+			while ((line = reader.ReadLine()) != null)
+			{
+				Console.WriteLine("Got line: " + line);
+			}
+		}
+
+		public void Hello() { writer.WriteLine("HELLO AMPERE"); }
 		public void Add(int id, string symbol, Direction dir, int price, int size) { }
 		public void Convert(int id, string symbol, Direction dir, int size) { }
 		public void Cancel(int id) { }
