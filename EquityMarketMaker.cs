@@ -10,20 +10,25 @@ namespace etc
 	{
 		class Security
 		{
+			public string symbol;
 			public SortedDictionary<int, int> buys;
 			public SortedDictionary<int, int> sells;
 			public int lastTradePrice; // 0 to start with
 			public DateTime lastTradeTime; // null to start with
 			public double fair; // estimate; 0.0 if unable to calculate (WARNING!)
 			
-			public Security()
+			public Security(string symbol_)
 			{
+				symbol = symbol_;
 				buys = new SortedDictionary<int, int>();
 				sells = new SortedDictionary<int, int>();
+				if (symbol == "BOND") { fair = 1000.0; }
 			}
 
 			public void RecalcFair()
 			{
+				if (symbol == "BOND") return;
+
 				// weight lastTradePrice and mid based on lastTradeTime recency
 				double lastTradeWeight = 0.0;
 				if (lastTradeTime != null)
@@ -68,14 +73,7 @@ namespace etc
 			}
 		}
 
-		private const string
-			BOND = "BOND",
-			GS = "GS",
-			MS = "MS",
-			WFC = "WFC",
-			XLF = "XLF";
-
-		private List<string> symbols = new List<string> { BOND, GS, MS, WFC, XLF };
+		private List<string> symbols = new List<string> { "BOND", "GS", "MS", "WFC", "XLF" };
 
 		private object thisLock = new object();
 		private Market market;
@@ -89,7 +87,7 @@ namespace etc
 
 			foreach (string sym in symbols)
 			{
-				secs[sym] = new Security();
+				secs[sym] = new Security(sym);
 			}
 
 			market.Book += Market_Book;

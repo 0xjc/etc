@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -105,12 +106,18 @@ namespace etc
 
 		const int INVALID_ID = -1;
 		private int currentID = 0;
+		private int cash;
+		private ConcurrentDictionary<string, int> positions;
+		private DateTime lastPositionsDump;
 
 		public Market(NetworkStream stream_)
 		{
 			stream = stream_;
 			reader = new StreamReader(stream, Encoding.ASCII);
 			writer = new StreamWriter(stream, Encoding.ASCII);
+			cash = 0;
+			positions = new ConcurrentDictionary<string, int>();
+			lastPositionsDump = DateTime.Now;
 		}
 
 		private void LogSend(string msg)
@@ -133,6 +140,26 @@ namespace etc
 			return (Direction)Enum.Parse(typeof(Direction), s);
 		}
 
+		public int GetCash() { return cash; }
+
+		public int GetPosition(string symbol)
+		{
+			if (positions.ContainsKey(symbol)) return positions[symbol];
+			else return 0;
+		}
+
+		public void DumpCashAndPositions()
+		{
+			Console.WriteLine("-----CURRENT POSITIONS-----");
+			Console.WriteLine(string.Format("Cash: {0}", cash));
+			foreach (var kvp in positions)
+			{
+				Console.WriteLine(string.Format("{0}: {1}", kvp.Key, kvp.Value));
+			}
+			Console.WriteLine("-----END POSITIONS-----");
+			lastPositionsDump = DateTime.Now;
+ 		}
+
 		public void ReceiveLoop()
 		{
 			string msg;
@@ -148,14 +175,19 @@ namespace etc
 								LogReceive(msg);
 								var args = new HelloEventArgs();
 								args.cash = int.Parse(toks[1]);
+								cash = args.cash;
 								args.positions = new Dictionary<string, int>();
 								for (int i = 2; i < toks.Length; ++i)
 								{
 									string[] symAndPosn = toks[i].Split(':');
-									args.positions.Add(symAndPosn[0], int.Parse(symAndPosn[1]));
+									string sym = symAndPosn[0];
+									int pos = int.Parse(symAndPosn[1]);
+									args.positions.Add(sym, pos);
+									positions[sym] = pos;
 								}
 								var handler = GotHello;
 								if (handler != null) handler(this, args);
+								DumpCashAndPositions();
 								break;
 							}
 						case "OPEN":
@@ -257,6 +289,10 @@ namespace etc
 								args.dir = ParseDirection(toks[3]);
 								args.price = int.Parse(toks[4]);
 								args.size = int.Parse(toks[5]);
+								if (!positions.ContainsKey(args.symbol)) positions[args.symbol] = 0;
+								int sign = (args.dir == Direction.BUY) ? 1 : -1;
+								positions[args.symbol] += sign * args.size;
+								cash -= sign * (args.price * args.size);
 								var handler = Fill;
 								if (handler != null) handler(this, args);
 								break;
@@ -275,6 +311,10 @@ namespace etc
 				catch (Exception ex)
 				{
 					LogError("Exn in Receive processing: " + ex.Message);
+				}
+				if (DateTime.Now - lastPositionsDump > TimeSpan.FromSeconds(5.0))
+				{
+					DumpCashAndPositions();
 				}
 			}
 		}
