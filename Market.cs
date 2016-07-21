@@ -173,6 +173,7 @@ namespace etc
 
 			string dumpText = sb.ToString();
 			posDumpFile.Write(dumpText);
+			posDumpFile.Flush();
 			Console.Write(dumpText);
 
 			lastPositionsDump = DateTime.Now;
