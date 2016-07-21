@@ -111,12 +111,12 @@ namespace etc
 
 		private void LogSend(string msg)
 		{
-			Console.WriteLine("SEND: " + msg);
+			//Console.WriteLine("SEND: " + msg);
 		}
 
 		private void LogReceive(string msg)
 		{
-			Console.WriteLine("RECV: " + msg);
+			//Console.WriteLine("RECV: " + msg);
 		}
 
 		private void LogError(string msg)
