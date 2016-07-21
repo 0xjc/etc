@@ -48,18 +48,18 @@ namespace etc
             {
                 if (canTradeBond)
                 {
-                    if (bond+buyOrder < 95)
+                    if (bond+buyOrder < 90)
                     {
-                        AddOrder(bondTicker, Direction.BUY, 999, 95 - (bond + buyOrder));
+                        AddOrder(bondTicker, Direction.BUY, 999, 97 - (bond + buyOrder));
                     }
                     else if (bond > 80)
                     {
                         AddOrder(bondTicker, Direction.SELL, 1000, 5);
                     }
 
-                    if (bond-sellOrder > -95)
+                    if (bond-sellOrder > -90)
                     {
-                        AddOrder(bondTicker, Direction.SELL, 1001, 95 + (bond - sellOrder));
+                        AddOrder(bondTicker, Direction.SELL, 1001, 97 + (bond - sellOrder));
                     }
                     else if (bond < -80)
                     {
