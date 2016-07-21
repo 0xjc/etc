@@ -45,7 +45,7 @@
   <ItemGroup>
     <Compile Include="ADRArbitrager.cs" />
     <Compile Include="BondMarketMaker.cs" />
-    <Compile Include="EquityMarketMaker.cs" />
+    <Compile Include="ETFArbitrager.cs" />
     <Compile Include="Market.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

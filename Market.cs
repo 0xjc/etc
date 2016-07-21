@@ -100,6 +100,14 @@ namespace etc
 		public event FillEventHandler Fill;
 		public event OutEventHandler Out;
 
+		class ConvertOrder
+		{
+			public string symbol;
+			public Direction dir;
+			public int size;
+			public ConvertOrder(string symbol_, Direction dir_, int size_) { symbol = symbol_; dir = dir_; size = size_; }
+		}
+
 		private NetworkStream stream;
 		private StreamReader reader;
 		private StreamWriter writer;
@@ -109,6 +117,7 @@ namespace etc
 		private int cash;
 		private ConcurrentDictionary<string, int> positions;
 		private DateTime lastPositionsDump;
+		private Dictionary<int, ConvertOrder> pendingConverts;
 
 		public Market(NetworkStream stream_)
 		{
@@ -118,6 +127,7 @@ namespace etc
 			cash = 0;
 			positions = new ConcurrentDictionary<string, int>();
 			lastPositionsDump = DateTime.Now;
+			pendingConverts = new Dictionary<int, ConvertOrder>();
 		}
 
 		private void LogSend(string msg)
@@ -264,6 +274,19 @@ namespace etc
 								LogReceive(msg);
 								var args = new AckEventArgs();
 								args.id = int.Parse(toks[1]);
+								ConvertOrder conv;
+								if (pendingConverts.TryGetValue(args.id, out conv))
+								{
+									pendingConverts.Remove(args.id);
+									int sign = (conv.dir == Direction.BUY) ? 1 : -1;
+									int num = conv.size / 10;
+									positions["XLF"] += sign * num * 10;
+									positions["BOND"] -= sign * num * 3;
+									positions["GS"] -= sign * num * 2;
+									positions["MS"] -= sign * num * 3;
+									positions["WFC"] -= sign * num * 2;
+									cash -= 100;
+								}
 								var handler = Ack;
 								if (handler != null) handler(this, args);
 								break;
@@ -365,6 +388,7 @@ namespace etc
 			writer.WriteLine(msg);
 			writer.Flush();
 			LogSend(msg);
+			pendingConverts.Add(id, new ConvertOrder(symbol, dir, size));
 			return id;
 		}
 

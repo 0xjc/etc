@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace etc
 {
-	class EquityMarketMaker
+	class ETFArbitrager
 	{
 		class Security
 		{
@@ -73,17 +73,35 @@ namespace etc
 			}
 		}
 
+		class Order
+		{
+			public string symbol;
+			public Direction direction;
+			public int price;
+			public int size;
+
+			public Order(string symbol_, Direction direction_, int price_, int size_)
+			{
+				symbol = symbol_;
+				direction = direction_;
+				price = price_;
+				size = size_;
+			}
+		}
+
 		private List<string> symbols = new List<string> { "BOND", "GS", "MS", "WFC", "XLF" };
 
 		private object thisLock = new object();
 		private Market market;
 
 		private Dictionary<string, Security> secs;
+		private Dictionary<string, List<Order>> orders;
 
-		public EquityMarketMaker(Market market_)
+		public ETFArbitrager(Market market_)
 		{
 			market = market_;
 			secs = new Dictionary<string, Security>();
+			orders = new Dictionary<string, List<Order>>();
 
 			foreach (string sym in symbols)
 			{
@@ -98,12 +116,58 @@ namespace etc
 		{
 			while (true)
 			{
-				Recalculate();
-				Task.Delay(50).Wait();
+				Readjust();
+				Task.Delay(2000).Wait();
 			}
 		}
 
-		private void Recalculate()
+		private void DoArb()
+		{
+			lock (thisLock)
+			{
+				Security xlf = secs["XLF"];
+				Security bond = secs["BOND"];
+				Security gs = secs["GS"];
+				Security ms = secs["MS"];
+				Security wfc = secs["WFC"];
+
+				if (xlf.fair == 0.0) return;
+				if (bond.fair == 0.0) return;
+				if (gs.fair == 0.0) return;
+				if (ms.fair == 0.0) return;
+				if (wfc.fair == 0.0) return;
+
+				double diff = xlf.fair - 0.3 * bond.fair
+					- 0.2 * gs.fair - 0.3 * ms.fair - 0.2 * wfc.fair;
+				
+				if (diff > 10.0)
+				{
+					market.Add("XLF", Direction.SELL, (int)Math.Round(xlf.fair), 10);
+				}
+				else if (diff < -10.0)
+				{
+					market.Add("XLF", Direction.BUY, (int)Math.Round(xlf.fair), 10);
+				}
+			}
+		}
+
+		private void DoConvert()
+		{
+			lock (thisLock)
+			{
+				int xlfPos = market.GetPosition("XLF");
+				if (xlfPos >= 50)
+				{
+					market.Convert("XLF", Direction.SELL, 50);
+				}
+				else if (xlfPos <= -50)
+				{
+					market.Convert("XLF", Direction.BUY, 50);
+				}
+			}
+		}
+
+		private void Readjust()
 		{
 			lock (thisLock)
 			{
@@ -112,6 +176,9 @@ namespace etc
 					var sec = secs[sym];
 					sec.RecalcFair();
 				}
+
+				DoArb();
+				DoConvert();
 			}
 		}
 
