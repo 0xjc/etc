@@ -48,23 +48,27 @@ namespace etc
             {
                 if (canTradeBond)
                 {
-                    if (bond+buyOrder < 90)
-                    {
-                        AddOrder(bondTicker, Direction.BUY, 999, 97 - (bond + buyOrder));
-                    }
-                    else if (bond > 80)
+                    if (bond > 80 && sellOrder < 90)
                     {
                         AddOrder(bondTicker, Direction.SELL, 1000, 5);
                     }
+                    if (bond < -80 && buyOrder < 90)
+                    {
+                        AddOrder(bondTicker, Direction.BUY, 1000, 5);
 
-                    if (bond-sellOrder > -90)
+                    }
+
+                    if (bond + buyOrder < 85 && buyOrder < 80)
+                    {
+                        AddOrder(bondTicker, Direction.BUY, 999, 97 - (bond + buyOrder));
+                    }
+                    if (bond - sellOrder > -85 && sellOrder < 80)
                     {
                         AddOrder(bondTicker, Direction.SELL, 1001, 97 + (bond - sellOrder));
                     }
-                    else if (bond < -80)
-                    {
-                        AddOrder(bondTicker, Direction.BUY, 1000, 5);
-                    }					
+
+
+                    Task.Delay(10).Wait();
                 }
             }
         }

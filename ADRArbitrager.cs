@@ -17,6 +17,9 @@ namespace etc
         public int adr;
         public int ord;
 
+        public int adrBuyOrderID;
+        public int adrSellOrderID;
+
         private Market market;
 
         public ADRArbitrager(Market market_)
@@ -25,6 +28,8 @@ namespace etc
             adr = 0;
             ord = 0;
             cash = 0;
+            adrBuyOrderID = -1;
+            adrSellOrderID = -1;
             canTrade = false;
         }
 
