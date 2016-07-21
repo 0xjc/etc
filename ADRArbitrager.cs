@@ -57,11 +57,12 @@ namespace etc
                         if (adr == 10)
                             dir = Direction.SELL;
                         market.Convert(adrTicker, dir, 10);
+                        adr = 0;
                     }
 
                     if (ord != 0)
                     {
-                        if (ord >0)
+                        if (ord > 0)
                         {
                             int orderId = market.Add(ordTicker, Direction.SELL, ordBid ,1);
                             Task.Delay(100).Wait();
@@ -130,7 +131,7 @@ namespace etc
                         cash -= e.price * e.size;
                         if (e.symbol == adrTicker)
                             adr += e.size;
-                        else
+                        else if(e.symbol == ordTicker)
                             ord += e.size;
                     }
                     else
@@ -138,7 +139,7 @@ namespace etc
                         cash += e.price * e.size;
                         if (e.symbol == adrTicker)
                             adr -= e.size;
-                        else
+                        else if(e.symbol == ordTicker)
                             ord -= e.size;
                     }
                 
