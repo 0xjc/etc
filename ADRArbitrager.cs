@@ -57,7 +57,9 @@ namespace etc
                         if (adr == 10)
                             dir = Direction.SELL;
                         market.Convert(adrTicker, dir, 10);
+                        ord = adr;
                         adr = 0;
+                        
                     }
 
                     if (ord != 0)
