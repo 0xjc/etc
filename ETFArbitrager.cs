@@ -241,6 +241,7 @@ namespace etc
 
 				DoArb();
 				DoConvert();
+				DoUnposition();
 			}
 		}
 
