@@ -91,7 +91,7 @@ namespace etc
                 market.Cancel(adrSellOrderID);
                 adrSellOrderID = -1;
             }
-            Task.Delay(100).Wait();
+            Task.Delay(200).Wait();
         }
 
         void market_Book(object sender, BookEventArgs e)
@@ -108,9 +108,11 @@ namespace etc
 
                     int adr = market.GetPosition(adrTicker); 
                     //Console.WriteLine("I am adding buy order.   " + "adr = " + adr + "I am going to buy " + Math.Min(10 - adr, 10) + "shares.");
-                    adrBuyOrderID = market.Add(adrTicker, Direction.BUY, ordBid - 3, Math.Max(0, Math.Min(10 - adr, 6)));
+                    adrBuyOrderID = market.Add(adrTicker, Direction.BUY, ordBid - 2, Math.Max(0, Math.Min(10 - adr, 6)));
                     //Console.WriteLine("I am adding sell order.   " + "adr = " + adr + "I am going to sell " + Math.Min(10 + adr, 10) + "shares.");
-                    adrSellOrderID = market.Add(adrTicker, Direction.SELL, ordAsk + 3, Math.Max(0, Math.Min(10 + adr, 6)));
+                    adrSellOrderID = market.Add(adrTicker, Direction.SELL, ordAsk + 2, Math.Max(0, Math.Min(10 + adr, 6)));
+
+                    Task.Delay(300).Wait();
                 }
             }
             if (ticker == adrTicker)
