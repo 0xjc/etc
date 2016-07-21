@@ -111,6 +111,7 @@ namespace etc
 		private NetworkStream stream;
 		private StreamReader reader;
 		private StreamWriter writer;
+		private StreamWriter posDumpFile;
 
 		public const int INVALID_ID = -1;
 		private int currentID = 0;
@@ -119,7 +120,7 @@ namespace etc
 		private DateTime lastPositionsDump;
 		private Dictionary<int, ConvertOrder> pendingConverts;
 
-		public Market(NetworkStream stream_)
+		public Market(NetworkStream stream_, string posDumpFilename)
 		{
 			stream = stream_;
 			reader = new StreamReader(stream, Encoding.ASCII);
@@ -128,6 +129,7 @@ namespace etc
 			positions = new ConcurrentDictionary<string, int>();
 			lastPositionsDump = DateTime.Now;
 			pendingConverts = new Dictionary<int, ConvertOrder>();
+			posDumpFile = File.AppendText(posDumpFilename);
 		}
 
 		private void LogSend(string msg)
@@ -160,13 +162,19 @@ namespace etc
 
 		public void DumpCashAndPositions()
 		{
-			Console.WriteLine("-----CURRENT POSITIONS-----");
-			Console.WriteLine(string.Format("Cash: {0}", cash));
+			StringBuilder sb = new StringBuilder();
+			sb.AppendLine("-----CURRENT POSITIONS-----");
+			sb.AppendLine(string.Format("Cash: {0}", cash));
 			foreach (var kvp in positions)
 			{
-				Console.WriteLine(string.Format("{0}: {1}", kvp.Key, kvp.Value));
+				sb.AppendLine(string.Format("{0}: {1}", kvp.Key, kvp.Value));
 			}
-			Console.WriteLine("-----END POSITIONS-----");
+			sb.AppendLine("-----END POSITIONS-----");
+
+			string dumpText = sb.ToString();
+			posDumpFile.Write(dumpText);
+			Console.Write(dumpText);
+
 			lastPositionsDump = DateTime.Now;
  		}
 
