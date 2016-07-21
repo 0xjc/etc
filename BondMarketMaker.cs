@@ -58,9 +58,7 @@ namespace etc
                     else
                     {
                         AddOrder("BOND", Direction.SELL, 1000, 5);
-                    }
-
-
+                    }					
                 }
             }
         }
@@ -108,6 +106,8 @@ namespace etc
             orderPrice.Add(orderID, price);
             orderSize.Add(orderID, size);
             orderID++;
+
+            Task.Delay(10).Wait();
         }
 
         void market_Close(object sender, CloseEventArgs e)

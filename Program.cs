@@ -18,7 +18,12 @@ namespace etc
 			var client = new TcpClient(host, port);
 			var stream = client.GetStream();
 			var market = new Market(stream);
+
 			market.Hello();
+
+			var bonds = new BondMarketMaker(market);
+			Task.Run(() => { bonds.Main(); });
+
 			market.ReceiveLoop();
 		}
 	}
