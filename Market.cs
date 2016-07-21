@@ -164,13 +164,13 @@ namespace etc
 		public void DumpCashAndPositions()
 		{
 			StringBuilder sb = new StringBuilder();
-			sb.AppendLine("-----CURRENT POSITIONS-----");
-			sb.AppendLine(string.Format("Cash: {0}", cash));
+			sb.Append("POSITIONS: ");
+			sb.Append(string.Format("[Cash={0}]", cash));
 			foreach (var kvp in positions)
 			{
-				sb.AppendLine(string.Format("{0}: {1}", kvp.Key, kvp.Value));
+				sb.Append(string.Format(" [{0}={1}]", kvp.Key, kvp.Value));
 			}
-			sb.AppendLine("-----END POSITIONS-----");
+			sb.AppendLine();
 
 			string dumpText = sb.ToString();
 			posDumpFile.Write(dumpText);
@@ -317,6 +317,7 @@ namespace etc
 									{
 										LogError(string.Format("Convert on unknown symbol {0}", conv.symbol));
 									}
+									DumpCashAndPositions();
 								}
 								var handler = Ack;
 								if (handler != null) handler(this, args);
@@ -347,6 +348,7 @@ namespace etc
 								int sign = (args.dir == Direction.BUY) ? 1 : -1;
 								positions[args.symbol] += sign * args.size;
 								cash -= sign * (args.price * args.size);
+								DumpCashAndPositions();
 								var handler = Fill;
 								if (handler != null) handler(this, args);
 								break;
