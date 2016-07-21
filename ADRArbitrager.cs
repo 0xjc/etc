@@ -61,15 +61,18 @@ namespace etc
                     if (ord != 0)
                     {
                         Direction dir = Direction.BUY;
+                        int price;
                         if (ord > 0)
                         {
                             dir = Direction.SELL;
+                            price = ordBid;
                         }
                         else
                         {
                             dir = Direction.BUY;
+                            price = ordAsk;
                         }
-                        int orderId = market.Add(ordTicker, dir, ordBid, 1);
+                        int orderId = market.Add(ordTicker, dir, price, 1);
                         Task.Delay(200).Wait();
                         market.Cancel(orderId);
                     }
