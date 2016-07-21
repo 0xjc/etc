@@ -278,14 +278,31 @@ namespace etc
 								if (pendingConverts.TryGetValue(args.id, out conv))
 								{
 									pendingConverts.Remove(args.id);
-									int sign = (conv.dir == Direction.BUY) ? 1 : -1;
-									int num = conv.size / 10;
-									positions["XLF"] += sign * num * 10;
-									positions["BOND"] -= sign * num * 3;
-									positions["GS"] -= sign * num * 2;
-									positions["MS"] -= sign * num * 3;
-									positions["WFC"] -= sign * num * 2;
-									cash -= 100;
+									if (conv.symbol == "XLF")
+									{
+										int sign = (conv.dir == Direction.BUY) ? 1 : -1;
+										int num = conv.size / 10;
+										positions["XLF"] += sign * num * 10;
+										positions["BOND"] -= sign * num * 3;
+										positions["GS"] -= sign * num * 2;
+										positions["MS"] -= sign * num * 3;
+										positions["WFC"] -= sign * num * 2;
+										cash -= 100;
+									}
+									else if (conv.symbol == "VALE" || conv.symbol == "VALBZ")
+									{
+										int sign1 = (conv.dir == Direction.BUY) ? 1 : -1;
+										int sign2 = (conv.symbol == "VALE") ? 1 : -1;
+										int sign = sign1 * sign2;
+										int num = conv.size;
+										positions["VALE"] += sign * num;
+										positions["VALBZ"] -= sign * num;
+										cash -= 10;
+									}
+									else
+									{
+										LogError(string.Format("Convert on unknown symbol {0}", conv.symbol));
+									}
 								}
 								var handler = Ack;
 								if (handler != null) handler(this, args);
