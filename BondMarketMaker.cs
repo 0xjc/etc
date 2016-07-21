@@ -42,12 +42,27 @@ namespace etc
             {
                 if (canTradeBond)
                 {
-                    AddOrder("BOND", Direction.BUY, 999, 20);
-                    AddOrder("BOND", Direction.SELL, 1001, 20);
+                    if (bond <= 80)
+                    {
+                        AddOrder("BOND", Direction.BUY, 999, 20);
+                    }
+                    else
+                    {
+                        AddOrder("BOND", Direction.BUY, 1000, 5);
+                    }
+
+                    if (bond >= -80)
+                    {
+                        AddOrder("BOND", Direction.SELL, 1001, 20);
+                    }
+                    else
+                    {
+                        AddOrder("BOND", Direction.SELL, 1000, 5);
+                    }
+
+
                 }
             }
-
-            return 0;
         }
 
         void market_Fill(object sender, FillEventArgs e)
