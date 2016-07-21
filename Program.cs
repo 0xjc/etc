@@ -12,7 +12,7 @@ namespace etc
 		static void Main(string[] args)
 		{
             Console.WriteLine("hello swj05652");
-			var client = new TcpClient(args[1], int.Parse(args[2]));
+			var client = new TcpClient(args[0], int.Parse(args[1]));
 			var stream = client.GetStream();
 			var market = new Market(stream);
 			market.Hello();
