@@ -207,7 +207,7 @@ namespace etc
 		public void DumpBooks()
 		{
 			StringBuilder sb = new StringBuilder();
-			sb.Append("BOOK: ");
+			sb.Append("BOOK:");
 			foreach (var sec in securities.Values)
 			{
 				lock (sec.GetLock())
@@ -225,10 +225,10 @@ namespace etc
 		public void DumpCashAndPositions()
 		{
 			StringBuilder sb = new StringBuilder();
-			sb.Append("POS: ");
+			sb.Append("POS:");
 			lock (thisLock)
 			{
-				sb.Append(string.Format("$={0}", cash));
+				sb.Append(string.Format(" $={0}", cash));
 				foreach (var kvp in positions)
 				{
 					sb.Append(string.Format(" {0}={1}", kvp.Key, kvp.Value));
