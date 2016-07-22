@@ -56,72 +56,6 @@ namespace etc
                 }
                 return (int)((ask+bid)/2);
             }
-
-			// do not use  
-            /*
-            public void RecalcFair()
-			{
-				//if (symbol == "BOND") return;
-
-				// weight lastTradePrice and mid based on lastTradeTime recency
-				double lastTradeWeight = 0.0;
-				if (lastTradeTime != null)
-				{
-					TimeSpan diff = DateTime.Now - lastTradeTime.Value;
-					if (diff < TimeSpan.FromSeconds(10.0))
-					{
-						lastTradeWeight = 1.0 - (diff.TotalSeconds / 10.0);
-					}
-				}
-
-				double mid = 0.0;
-				if (buys.Count > 0 && sells.Count > 0)
-				{
-					mid = (buys.Last().Key + sells.First().Key) / 2.0;
-				}
-
-				if (lastTradeWeight == 0.0)
-				{
-					if (mid == 0.0)
-					{
-						if (lastTradeTime != null) fair = lastTradePrice;
-						else fair = 0.0;
-					}
-					else
-					{
-						fair = mid;
-					}
-				}
-				else
-				{
-					if (mid == 0.0)
-					{
-						fair = lastTradePrice;
-					}
-					else
-					{
-						fair = lastTradePrice * lastTradeWeight
-							+ mid * (1.0 - lastTradeWeight);
-					}
-				}
-			}
-            */
-		}
-
-		class Order
-		{
-			public string symbol;
-			public Direction direction;
-			public int price;
-			public int size;
-
-			public Order(string symbol_, Direction direction_, int price_, int size_)
-			{
-				symbol = symbol_;
-				direction = direction_;
-				price = price_;
-				size = size_;
-			}
 		}
 
 		private List<string> symbols;
@@ -131,6 +65,8 @@ namespace etc
 
 		private Dictionary<string, Security> secs;
 		private Dictionary<string, HashSet<int>> existingOrder;
+
+		private Direction BUY = Direction.BUY, SELL = Direction.SELL;
 
         public static int MEMBER_COUNT = 9;
         public int RSP_DIVISOR = 20;
@@ -186,7 +122,12 @@ namespace etc
 				Task.Delay(900).Wait();
 			}
 		}
-		
+
+		private void AddOrder(string symbol, Direction direction, int price, int size)
+		{
+			int id = market.Add(symbol, direction, price, size);
+			existingOrder[symbol].Add(id);
+		}
 
         private void CancelExistingOrderOnAll()
         {
@@ -223,13 +164,13 @@ namespace etc
                     rsp_buy += (double)(members[i].bid) * (double)members[i].rspWeight / (double)RSP_DIVISOR;
                     rsp_sell += (double)(members[i].ask) * (double)members[i].rspWeight / (double)RSP_DIVISOR;
                 }
-
-                existingOrder["RSP"].Add(market.Add("RSP", Direction.SELL, (int)Math.Ceiling(rsp_sell), Math.Min(20, 100 + market.GetPosition("RSP"))));
-                existingOrder["RSP"].Add(market.Add("RSP", Direction.BUY, (int)Math.Floor(rsp_buy), Math.Min(20, 100 - market.GetPosition("RSP"))));
-                existingOrder["RSP"].Add(market.Add("RSP", Direction.SELL, (int)Math.Ceiling(rsp_sell + rsp.mid * 10 / 10000), Math.Min(20, 100 + market.GetPosition("RSP"))));
-                existingOrder["RSP"].Add(market.Add("RSP", Direction.BUY, (int)Math.Floor(rsp_buy - rsp.mid * 10 / 10000), Math.Min(20, 100 - market.GetPosition("RSP"))));
-                existingOrder["RSP"].Add(market.Add("RSP", Direction.SELL, (int)Math.Ceiling(rsp_sell + rsp.mid * 30 / 10000), Math.Min(20, 100 + market.GetPosition("RSP"))));
-                existingOrder["RSP"].Add(market.Add("RSP", Direction.BUY, (int)Math.Floor(rsp_buy - rsp.mid * 30 / 10000), Math.Min(20, 100 - market.GetPosition("RSP"))));
+				
+                AddOrder("RSP", SELL, (int)Math.Ceiling(rsp_sell), Math.Min(20, 100 + market.GetPosition("RSP")));
+				AddOrder("RSP", BUY, (int)Math.Floor(rsp_buy), Math.Min(20, 100 - market.GetPosition("RSP")));
+				AddOrder("RSP", SELL, (int)Math.Ceiling(rsp_sell + rsp.mid * 10 / 10000), Math.Min(20, 100 + market.GetPosition("RSP")));
+				AddOrder("RSP", BUY, (int)Math.Floor(rsp_buy - rsp.mid * 10 / 10000), Math.Min(20, 100 - market.GetPosition("RSP")));
+				AddOrder("RSP", SELL, (int)Math.Ceiling(rsp_sell + rsp.mid * 30 / 10000), Math.Min(20, 100 + market.GetPosition("RSP")));
+				AddOrder("RSP", BUY, (int)Math.Floor(rsp_buy - rsp.mid * 30 / 10000), Math.Min(20, 100 - market.GetPosition("RSP")));
             }
 		}
 
@@ -276,26 +217,26 @@ namespace etc
                 int synpos = Synpos(memberIndex);
                 if (synpos > 5)
                 {
-                    existingOrder[symbol].Add(market.Add(symbol, Direction.SELL, (3 * sec.ask + 0 * sec.bid + 7 * sec.mid) / 10, Math.Abs(synpos) + 1));
+					AddOrder(symbol, SELL, (3 * sec.ask + 0 * sec.bid + 7 * sec.mid) / 10, Math.Abs(synpos) + 1);
                 }
                 else if (synpos < -5)
                 {
-                    existingOrder[symbol].Add(market.Add(symbol, Direction.BUY, (0 * sec.ask + 3 * sec.bid + 7 * sec.mid) / 10, Math.Abs(synpos) + 1));
+					AddOrder(symbol, BUY, (0 * sec.ask + 3 * sec.bid + 7 * sec.mid) / 10, Math.Abs(synpos) + 1);
                 }
                 else
                 {
                     if ((sec.ask - sec.bid)  > sec.mid * 5 / 10000)
                     {
-                        existingOrder[symbol].Add(market.Add(symbol, Direction.BUY, sec.bid + 1, 2));
-                        existingOrder[symbol].Add(market.Add(symbol, Direction.SELL, sec.ask - 1, 2));
+						AddOrder(symbol, BUY, sec.bid + 1, 2);
+						AddOrder(symbol, SELL, sec.ask - 1, 2);
                     }
                 }
-                existingOrder[symbol].Add(market.Add(symbol, Direction.BUY, sec.bid - sec.mid * 10 / 10000, 2));
-                existingOrder[symbol].Add(market.Add(symbol, Direction.SELL, sec.ask + sec.mid * 10 / 10000, 2));
-                existingOrder[symbol].Add(market.Add(symbol, Direction.BUY, sec.bid - sec.mid * 30 / 10000, 5));
-                existingOrder[symbol].Add(market.Add(symbol, Direction.SELL, sec.ask + sec.mid * 30 / 10000, 5));
-                existingOrder[symbol].Add(market.Add(symbol, Direction.BUY, sec.bid - sec.mid * 100 / 10000, 12));
-                existingOrder[symbol].Add(market.Add(symbol, Direction.SELL, sec.ask + sec.mid * 100 / 10000, 12));
+				AddOrder(symbol, BUY, sec.bid - sec.mid * 10 / 10000, 2);
+				AddOrder(symbol, SELL, sec.ask + sec.mid * 10 / 10000, 2);
+				AddOrder(symbol, BUY, sec.bid - sec.mid * 30 / 10000, 5);
+				AddOrder(symbol, SELL, sec.ask + sec.mid * 30 / 10000, 5);
+				AddOrder(symbol, BUY, sec.bid - sec.mid * 100 / 10000, 12);
+				AddOrder(symbol, SELL, sec.ask + sec.mid * 100 / 10000, 12);
             }
 		}
 
