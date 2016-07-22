@@ -241,11 +241,11 @@ namespace etc
                 {
                     if (Synpos(0) > 0 && Synpos(1) > 0 && Synpos(2) > 0)
                     {
-                        AddOrder("XLY", Direction.SELL, secs["XLY"].mid, 2);
+                        AddOrder("XLY", Direction.SELL, (3 * sec.ask + 0 * sec.bid + 7 * sec.mid) / 10, 2);
                     }
                     else if (Synpos(0) < 0 && Synpos(1) < 0 && Synpos(2) < 0)
                     {
-                        AddOrder("XLY", Direction.BUY, secs["XLY"].mid, 2);
+                        AddOrder("XLY", Direction.BUY, (0 * sec.ask + 3 * sec.bid + 7 * sec.mid) / 10, 2);
                     }
                     else
                     {
@@ -279,11 +279,11 @@ namespace etc
                 {
                     if (Synpos(3) > 0 && Synpos(4) > 0 && Synpos(5) > 0)
                     {
-                        AddOrder("XLP", Direction.SELL, secs["XLP"].mid, 2);
+                        AddOrder("XLP", Direction.SELL, (3 * sec.ask + 0 * sec.bid + 7 * sec.mid) / 10, 2);
                     }
                     else if (Synpos(3) < 0 && Synpos(4) < 0 && Synpos(5) < 0)
                     {
-                        AddOrder("XLP", Direction.BUY, secs["XLP"].mid, 2);
+                        AddOrder("XLP", Direction.BUY, (0 * sec.ask + 3 * sec.bid + 7 * sec.mid) / 10, 2);
                     }
                     else
                     {
@@ -317,11 +317,11 @@ namespace etc
                 {
                     if (Synpos(6) > 0 && Synpos(7) > 0 && Synpos(8) > 0)
                     {
-                        AddOrder("XLU", Direction.SELL, secs["XLU"].mid, 2);
+                        AddOrder("XLU", Direction.SELL, (3 * sec.ask + 0 * sec.bid + 7 * sec.mid) / 10, 2);
                     }
                     else if (Synpos(6) < 0 && Synpos(7) < 0 && Synpos(8) < 0)
                     {
-                        AddOrder("XLU", Direction.BUY, secs["XLU"].mid, 2);
+                        AddOrder("XLU", Direction.BUY, (0 * sec.ask + 3 * sec.bid + 7 * sec.mid) / 10, 2);
                     }
                     else
                     {
