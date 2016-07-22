@@ -388,14 +388,14 @@ namespace etc
 		{
 			if (price <= 0)
 			{
-				LogError("ADD with nonpositive price attempted");
+				//LogError("ADD with nonpositive price attempted");
 				return INVALID_ID;
 			}
 
 			if (size == 0) return INVALID_ID;
 			if (size < 0)
 			{
-				LogError("ADD with negative size attempted");
+				//LogError("ADD with negative size attempted");
 				return INVALID_ID;
 			}
 
@@ -413,7 +413,7 @@ namespace etc
 			if (size == 0) return INVALID_ID;
 			if (size < 0)
 			{
-				LogError("CONVERT with negative size attempted");
+				//LogError("CONVERT with negative size attempted");
 				return INVALID_ID;
 			}
 
