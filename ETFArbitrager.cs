@@ -68,18 +68,23 @@ namespace etc
 			{
                 CancelExistingOrderOnAll();
                 Task.Delay(200).Wait();
+
 				UpdateSecurities();
                 DoArb();
                 Task.Delay(100).Wait();
+
 				UpdateSecurities();
 				DoConvert("RSP");
                 DoConvert("XLY");
                 DoConvert("XLP");
                 DoConvert("XLU");
                 Task.Delay(100).Wait();
+
 				UpdateSecurities();
-				//DoSmartUnposition();
-				//Task.Delay(100).Wait();
+				DoSmartUnposition();
+				Task.Delay(100).Wait();
+
+				UpdateSecurities();
 				DoUnposition();
 				Task.Delay(900).Wait();
 			}
@@ -182,11 +187,11 @@ namespace etc
                     int synpos = Synpos(memberIndex);
                     if (synpos > 5)
                     {
-                        AddOrder(symbol, SELL, (8 * sec.ask + 0 * sec.bid + 2 * sec.mid) / 10, Math.Abs(synpos) + 1);
+                        AddOrder(symbol, SELL, (5 * sec.ask + 0 * sec.bid + 5 * sec.mid) / 10, Math.Abs(synpos) + 1);
                     }
                     else if (synpos < -5)
                     {
-                        AddOrder(symbol, BUY, (0 * sec.ask + 8 * sec.bid + 2 * sec.mid) / 10, Math.Abs(synpos) + 1);
+                        AddOrder(symbol, BUY, (0 * sec.ask + 5 * sec.bid + 5 * sec.mid) / 10, Math.Abs(synpos) + 1);
                     }
                     else
                     {
