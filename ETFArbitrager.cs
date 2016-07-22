@@ -163,6 +163,8 @@ namespace etc
 		{
 			while (true)
 			{
+                CancelExistingOrder("RSP");
+                Task.Delay(200).Wait();
                 DoArb();
                 DoConvert();
                 DoUnposition();
@@ -203,8 +205,7 @@ namespace etc
                     rsp_sell += (double)(members[i].ask) * (double)memberWeights[i] / (double)RSP_DIVISOR;
                 }
 
-                CancelExistingOrder("RSP");
-                Task.Delay(200).Wait();
+                
                 //Console.WriteLine("ETF DoArb() : " + "rsp_buy");
                 existingOrder["RSP"].Add(market.Add("RSP", Direction.SELL, (int)Math.Ceiling(rsp_sell), Math.Min(20, 100 + market.GetPosition("RSP"))));
                 existingOrder["RSP"].Add(market.Add("RSP", Direction.BUY, (int)Math.Floor(rsp_buy), Math.Min(20, 100 - market.GetPosition("RSP"))));
