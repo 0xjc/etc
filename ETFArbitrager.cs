@@ -257,25 +257,25 @@ namespace etc
 
 		private void Market_Book(object sender, BookEventArgs e)
 		{
-			lock (thisLock)
+			Security sec;
+			if (secs.TryGetValue(e.symbol, out sec))
 			{
-				Security sec;
-				if (secs.TryGetValue(e.symbol, out sec))
+				lock (thisLock)
 				{
 					sec.buys = e.buys;
 					sec.sells = e.sells;
-                    sec.ask = sec.Ask();
-                    sec.bid = sec.Bid();
+					sec.ask = sec.Ask();
+					sec.bid = sec.Bid();
 				}
 			}
 		}
 
 		private void Market_Trade(object sender, TradeEventArgs e)
 		{
-			lock (thisLock)
+			Security sec;
+			if (secs.TryGetValue(e.symbol, out sec))
 			{
-				Security sec;
-				if (secs.TryGetValue(e.symbol, out sec))
+				lock (thisLock)
 				{
 					sec.lastTradePrice = e.price;
 					sec.lastTradeTime = DateTime.Now;
