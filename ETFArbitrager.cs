@@ -143,8 +143,8 @@ namespace etc
 			{
 				secs[sym] = new Security(sym);
                 existingOrder[sym] = new HashSet<int>();
-                market.Add(sym, Direction.BUY, 1, 10);
-                market.Add(sym, Direction.SELL, 99999, 10);
+                market.Add(sym, Direction.BUY, 100, 10);
+                market.Add(sym, Direction.SELL, 49999, 10);
 			}
             rsp = secs["RSP"];
             members[0] = secs["AMZN"]; memberTickers[0] = "AMZN"; memberWeights[0] = 3;
