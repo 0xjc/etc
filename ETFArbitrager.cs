@@ -161,11 +161,6 @@ namespace etc
 
 		public void Main()
 		{
-            foreach (string sym in symbols)
-            {
-                market.Add(sym, Direction.BUY, 2000, 10);
-                market.Add(sym, Direction.SELL, 29999, 10);
-            }
 			while (true)
 			{
                 DoArb();
