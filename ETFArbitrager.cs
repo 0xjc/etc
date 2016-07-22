@@ -192,7 +192,7 @@ namespace etc
 
                 CancelExistingOrder("RSP");
                 Task.Delay(200).Wait();
-                Console.WriteLine("ETF DoArb() : " );
+                //Console.WriteLine("ETF DoArb() : " + "rsp_buy");
                 existingOrder["RSP"].Add(market.Add("RSP", Direction.SELL, (int)Math.Ceiling(rsp_sell), Math.Min(10, 100 + market.GetPosition("RSP"))));
                 existingOrder["RSP"].Add(market.Add("RSP", Direction.BUY, (int)Math.Floor(rsp_buy), Math.Min(10, 100 - market.GetPosition("RSP"))));
             }
