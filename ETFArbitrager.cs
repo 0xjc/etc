@@ -117,7 +117,7 @@ namespace etc
 			}
 		}
 
-		private List<string> symbols = new List<string> { "AMZN","DIS","DUK","HD","KO","NEE","PG","PM","RSP","SO","XLP","XLU","XLY" };
+		private List<string> symbols;
 
 		private object thisLock = new object();
 		private Market market;
@@ -136,6 +136,7 @@ namespace etc
 		public ETFArbitrager(Market market_)
 		{
 			market = market_;
+			symbols = market.Symbols;
 			secs = new Dictionary<string, Security>();
             existingOrder = new Dictionary<string, HashSet<int>>();
 
