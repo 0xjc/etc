@@ -137,7 +137,7 @@ namespace etc
 
 		private void LogSend(string msg)
 		{
-			Console.WriteLine("SEND: " + msg);
+			Console.WriteLine("\033[36mSEND: " + msg + "\033[0m");
 		}
 
 		private void LogReceive(string msg)
