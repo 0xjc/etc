@@ -114,14 +114,19 @@ namespace etc
 
 		private StreamWriter posDumpFile;
 		private StreamWriter bookDumpFile;
+		private StreamWriter outputDumpFile;
 
 		public const int INVALID_ID = -1;
 		public List<string> Symbols = new List<string> { "AMZN", "HD", "DIS", "PG", "KO", "PM", "NEE", "DUK", "SO", "XLY", "XLP", "XLU", "RSP" };
 
 		private object thisLock = new object();
 		private int currentID = 0;
+
 		private ConcurrentQueue<string> sendQueue;
 		private SemaphoreSlim sendAvailable;
+
+		private ConcurrentQueue<string> outputQueue;
+		private SemaphoreSlim outputAvailable;
 
 		private int cash;
 		private Dictionary<string, int> positions;
@@ -137,18 +142,41 @@ namespace etc
 			writer = new StreamWriter(stream, Encoding.ASCII);
 			posDumpFile = File.CreateText(string.Format("pos-{0}.txt", runID));
 			bookDumpFile = File.CreateText(string.Format("book-{0}.txt", runID));
-			sendAvailable = new SemaphoreSlim(0);
+			outputDumpFile = File.CreateText(string.Format("output-{0}.txt", runID));
 			sendQueue = new ConcurrentQueue<string>();
+			sendAvailable = new SemaphoreSlim(0);
+			outputQueue = new ConcurrentQueue<string>();
+			outputAvailable = new SemaphoreSlim(0);
 			cash = 0;
 			positions = new Dictionary<string, int>();
 			securities = new ConcurrentDictionary<string, Security>();
 			pendingConverts = new Dictionary<int, ConvertOrder>();
 		}
 
+		public void OutputLoop()
+		{
+			while (true)
+			{
+				string output;
+				outputAvailable.Wait();
+				if (outputQueue.TryDequeue(out output))
+				{
+					Console.WriteLine(output);
+					outputDumpFile.WriteLine(output);
+				}
+			}
+		}
+
+		private void QueueOutput(string output)
+		{
+			outputQueue.Enqueue(output);
+			outputAvailable.Release();
+		}
+
 		private void LogSend(string msg)
 		{
 			if (msg.StartsWith("CANCEL")) return;
-			Console.WriteLine("\x1b[36mSEND: " + msg + "\x1b[0m");
+			QueueOutput("\x1b[36mSEND: " + msg + "\x1b[0m");
 		}
 
 		private void LogReceive(string msg)
@@ -166,12 +194,12 @@ namespace etc
 				else color = 0;
 				colorCode = "\x1b[" + color + "m";
 			}
-			Console.WriteLine(colorCode + "RECV: " + msg + (colorCode == "" ? "" : "\x1b[0m"));
+			QueueOutput(colorCode + "RECV: " + msg + (colorCode == "" ? "" : "\x1b[0m"));
 		}
 
 		private void LogError(string msg)
 		{
-			Console.Error.WriteLine("\x1b[31mERROR: " + msg + "\x1b[0m");
+			QueueOutput("\x1b[31mERROR: " + msg + "\x1b[0m");
 		}
 
 		public Direction ParseDirection(string s)
