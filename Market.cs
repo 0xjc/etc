@@ -118,6 +118,8 @@ namespace etc
 		private DateTime lastBookDump;
 
 		public const int INVALID_ID = -1;
+		public List<string> Symbols = new List<string> { "AMZN", "HD", "DIS", "PG", "KO", "PM", "NEE", "DUK", "SO", "XLY", "XLP", "XLU", "RSP" };
+
 		private object thisLock = new object();
 		private int currentID = 0;
 		private ConcurrentQueue<string> sendQueue;
@@ -208,11 +210,15 @@ namespace etc
 		{
 			StringBuilder sb = new StringBuilder();
 			sb.Append("BOOK:");
-			foreach (var sec in securities.Values)
+			foreach (var sym in Symbols)
 			{
-				lock (sec.GetLock())
+				Security sec;
+				if (securities.TryGetValue(sym, out sec))
 				{
-					sb.Append(string.Format(" {0}:{1}@{2}", sec.symbol, sec.bid, sec.ask));
+					lock (sec.GetLock())
+					{
+						sb.Append(string.Format(" {0}:{1}@{2}", sec.symbol, sec.bid, sec.ask));
+					}
 				}
 			}
 			string dumpText = sb.ToString();
@@ -229,9 +235,13 @@ namespace etc
 			lock (thisLock)
 			{
 				sb.Append(string.Format(" $={0}", cash));
-				foreach (var kvp in positions)
+				foreach (var sym in Symbols)
 				{
-					sb.Append(string.Format(" {0}={1}", kvp.Key, kvp.Value));
+					int pos;
+					if (positions.TryGetValue(sym, out pos))
+					{
+						sb.Append(string.Format(" {0}={1}", sym, pos));
+					}
 				}
 			}
 			string dumpText = sb.ToString();
