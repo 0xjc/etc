@@ -241,12 +241,12 @@ namespace etc
                     return;
                 int pos = market.GetPosition(symbol);
                 int synpos = pos + (int)Math.Round(market.GetPosition("RSP") * memberWeights[memberIndex] / ((double)RSP_DIVISOR));
-                if (synpos > 5)
+                if (synpos > 20)
                 {
                     existingOrder[symbol].Add(market.Add(symbol, Direction.SELL, (2 * sec.ask + 0 * sec.bid + 8 * sec.mid) / 10, Math.Abs(synpos) + 1));
                     existingOrder[symbol].Add(market.Add(symbol, Direction.BUY, sec.bid - 5, 2));
                 }
-                else if (synpos < -5)
+                else if (synpos < -20)
                 {
                     existingOrder[symbol].Add(market.Add(symbol, Direction.BUY, (0 * sec.ask + 2 * sec.bid + 8 * sec.mid) / 10, Math.Abs(synpos) + 1));
                     existingOrder[symbol].Add(market.Add(symbol, Direction.SELL, sec.ask + 5, 2));
