@@ -168,7 +168,7 @@ namespace etc
                 DoArb();
                 DoConvert();
                 DoUnposition();
-				Task.Delay(500).Wait();
+				Task.Delay(900).Wait();
 			}
 		}
 		
@@ -240,18 +240,18 @@ namespace etc
                     return;
                 int pos = market.GetPosition(symbol);
                 int synpos = pos + (int)Math.Round(market.GetPosition("RSP") * memberWeights[memberIndex] / ((double)RSP_DIVISOR));
-                if (synpos > 10)
+                if (synpos > 5)
                 {
-                    existingOrder[symbol].Add(market.Add(symbol, Direction.SELL, (5 * sec.ask + 5 * sec.mid) / 10, Math.Abs(synpos)));
+                    existingOrder[symbol].Add(market.Add(symbol, Direction.SELL, (3 * sec.ask + 7 * sec.mid) / 10, Math.Abs(synpos)));
                 }
-                else if (synpos < -10)
+                else if (synpos < -5)
                 {
-                    existingOrder[symbol].Add(market.Add(symbol, Direction.BUY, (5 * sec.bid + 5 * sec.mid) / 10, Math.Abs(synpos)));
+                    existingOrder[symbol].Add(market.Add(symbol, Direction.BUY, (3 * sec.bid + 7 * sec.mid) / 10, Math.Abs(synpos)));
                 }
                 else
                 {
-                    existingOrder[symbol].Add(market.Add(symbol, Direction.BUY, sec.bid, 5));
-                    existingOrder[symbol].Add(market.Add(symbol, Direction.SELL, sec.ask, 5));
+                    existingOrder[symbol].Add(market.Add(symbol, Direction.BUY, sec.bid, 10));
+                    existingOrder[symbol].Add(market.Add(symbol, Direction.SELL, sec.ask, 10));
                 }
             }
 		}
