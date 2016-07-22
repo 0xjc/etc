@@ -33,11 +33,13 @@ namespace etc
 			var etf = new ETFArbitrager(market);
 			Task.Run(() => { etf.Main(); });
 
-			Task.Run(() => market.ReceiveLoop());
+			Task recvTask = Task.Run(() => market.ReceiveLoop());
 
 			Task.Run(() => market.DumpLoop());
 
-			market.OutputLoop();
+			Task.Run(() => market.OutputLoop());
+
+			recvTask.Wait();
 		}
 	}
 }
