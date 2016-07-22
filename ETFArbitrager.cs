@@ -183,7 +183,6 @@ namespace etc
                 var sec = secs[symbol];
                 if (sec.ask > 0 && sec.bid > 0)
                 {
-
                     int synpos = Synpos(memberIndex);
                     if (synpos > 5)
                     {
@@ -210,13 +209,16 @@ namespace etc
                 }
                 else
                 {
+                    
                     if (sec.ask > 0)
                     {
+                        market.Log("interesting: " + symbol + " only ask side");
                         AddOrder(symbol, SELL, sec.ask + sec.ask * 10 / 10000, 5);
                         AddOrder(symbol, BUY, sec.ask / 2, 25);
                     }
                     else if (sec.bid > 0)
                     {
+                        market.Log("interesting: " + symbol + " only bid side");
                         AddOrder(symbol, BUY, sec.bid - sec.bid * 10 / 10000, 5);
                         AddOrder(symbol, SELL, sec.bid * 2, 25);
                     }
@@ -264,11 +266,13 @@ namespace etc
                 {
                     if (sec.ask > 0)
                     {
+                        market.Log("interesting: " + "XLY" + " only ask side");
                         AddOrder("XLY", SELL, sec.ask + sec.ask * 10 / 10000, 5);
                         AddOrder("XLY", BUY, sec.ask / 2, 25);
                     }
                     else if (sec.bid > 0)
                     {
+                        market.Log("interesting: " + "XLY" + " only bid side");
                         AddOrder("XLY", BUY, sec.bid - sec.bid * 10 / 10000, 5);
                         AddOrder("XLY", SELL, sec.bid * 2, 25);
                     }
@@ -302,11 +306,13 @@ namespace etc
                 {
                     if (sec.ask > 0)
                     {
+                        market.Log("interesting: " + "XLP" + " only ask side");
                         AddOrder("XLP", SELL, sec.ask + sec.ask * 10 / 10000, 5);
                         AddOrder("XLP", BUY, sec.ask / 2, 25);
                     }
                     else if (sec.bid > 0)
                     {
+                        market.Log("interesting: " + "XLP" + " only bid side");
                         AddOrder("XLP", BUY, sec.bid - sec.bid * 10 / 10000, 5);
                         AddOrder("XLP", SELL, sec.bid * 2, 25);
                     }
@@ -340,11 +346,13 @@ namespace etc
                 {
                     if (sec.ask > 0)
                     {
+                        market.Log("interesting: " + "XLU" + " only ask side");
                         AddOrder("XLU", SELL, sec.ask + sec.ask * 10 / 10000, 5);
                         AddOrder("XLU", BUY, sec.ask / 2, 25);
                     }
                     else if (sec.bid > 0)
                     {
+                        market.Log("interesting: " + "XLU" + " only bid side");
                         AddOrder("XLU", BUY, sec.bid - sec.bid * 10 / 10000, 5);
                         AddOrder("XLU", SELL, sec.bid * 2, 25);
                     }
