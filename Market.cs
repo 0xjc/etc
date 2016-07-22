@@ -114,8 +114,6 @@ namespace etc
 
 		private StreamWriter posDumpFile;
 		private StreamWriter bookDumpFile;
-		private DateTime lastPosDump;
-		private DateTime lastBookDump;
 
 		public const int INVALID_ID = -1;
 		public List<string> Symbols = new List<string> { "AMZN", "HD", "DIS", "PG", "KO", "PM", "NEE", "DUK", "SO", "XLY", "XLP", "XLU", "RSP" };
@@ -139,8 +137,6 @@ namespace etc
 			writer = new StreamWriter(stream, Encoding.ASCII);
 			posDumpFile = File.CreateText(string.Format("pos-{0}.txt", runID));
 			bookDumpFile = File.CreateText(string.Format("book-{0}.txt", runID));
-			lastPosDump = DateTime.Now;
-			lastBookDump = DateTime.Now;
 			sendAvailable = new SemaphoreSlim(0);
 			sendQueue = new ConcurrentQueue<string>();
 			cash = 0;
@@ -224,9 +220,8 @@ namespace etc
 			}
 			string dumpText = sb.ToString();
 			bookDumpFile.WriteLine(dumpText);
-			bookDumpFile.FlushAsync();
+			bookDumpFile.Flush();
 			//Console.WriteLine(dumpText);
-			lastBookDump = DateTime.Now;
 		}
 
 		public void DumpCashAndPositions()
@@ -247,9 +242,18 @@ namespace etc
 			}
 			string dumpText = sb.ToString();
 			posDumpFile.WriteLine(dumpText);
-			posDumpFile.FlushAsync();
+			posDumpFile.Flush();
 			//Console.WriteLine(dumpText);
-			lastPosDump = DateTime.Now;
+		}
+
+		public void DumpLoop()
+		{
+			while (true)
+			{
+				DumpBooks();
+				DumpCashAndPositions();
+				Task.Delay(1000).Wait();
+			}
 		}
 
 		public void ProcessMessage(string msg)
@@ -277,7 +281,6 @@ namespace etc
 				}
 				var handler = GotHello;
 				if (handler != null) handler(this, args);
-				DumpCashAndPositions();
 			}
 			else if (tok0 == "OPEN")
 			{
@@ -352,15 +355,13 @@ namespace etc
 				//LogReceive(msg);
 				var args = new AckEventArgs();
 				args.id = int.Parse(toks[1]);
-
-				bool positionChanged = false;
+				
 				ConvertOrder conv;
 				lock (thisLock)
 				{
 					if (pendingConverts.TryGetValue(args.id, out conv))
 					{
 						pendingConverts.Remove(args.id);
-						positionChanged = true;
 
 						int sign = (conv.dir == Direction.BUY) ? 1 : -1;
 						int num = sign * conv.size / 20;
@@ -408,10 +409,6 @@ namespace etc
 						}
 					}
 				}
-				if (positionChanged)
-				{
-					DumpCashAndPositions();
-				}
 				var handler = Ack;
 				if (handler != null) handler(this, args);
 			}
@@ -442,7 +439,6 @@ namespace etc
 					positions[args.symbol] += sign * args.size;
 					cash -= sign * (args.price * args.size);
 				}
-				DumpCashAndPositions();
 				var handler = Fill;
 				if (handler != null) handler(this, args);
 			}
@@ -472,15 +468,6 @@ namespace etc
 				catch (Exception ex)
 				{
 					LogError("EXN in Receive processing: " + ex.StackTrace);
-				}
-				var now = DateTime.Now;
-				if (now - lastPosDump > TimeSpan.FromSeconds(1.0))
-				{
-					DumpCashAndPositions();
-				}
-				if (now - lastBookDump > TimeSpan.FromSeconds(1.0))
-				{
-					DumpBooks();
 				}
 			}
 		}
