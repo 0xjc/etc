@@ -167,12 +167,8 @@ namespace etc
                 Task.Delay(200).Wait();
                 DoArb();
                 DoConvert();
-                foreach(string symbol in memberTickers)
-                {
-                    DoMarketMaking(symbol);
-                }
                 DoUnposition();
-				Task.Delay(800).Wait();
+				Task.Delay(500).Wait();
 			}
 		}
 		
@@ -198,18 +194,6 @@ namespace etc
                 existingOrder[symbol].Clear();
             }
 		}
-
-        private void DoMarketMaking(string symbol)
-        {
-            lock (thisLock)
-            {
-                var sec = secs[symbol];
-                if (sec.ask < 0 || sec.bid < 0)
-                    return;
-                existingOrder[symbol].Add(market.Add(symbol, Direction.BUY, sec.bid, 5));
-                existingOrder[symbol].Add(market.Add(symbol, Direction.BUY, sec.ask, 5));
-            }
-        }
 
 		private void DoArb()
 		{
@@ -252,21 +236,22 @@ namespace etc
             {
                 string symbol = memberTickers[memberIndex];
                 var sec = secs[symbol];
+                if (sec.ask < 0 || sec.bid < 0)
+                    return;
                 int pos = market.GetPosition(symbol);
                 int synpos = pos + (int)Math.Round(market.GetPosition("RSP") * memberWeights[memberIndex] / ((double)RSP_DIVISOR));
-                if (synpos > 5)
+                if (synpos > 10)
                 {
-                    if (sec.bid > 0 && sec.mid > 0)
-                    {
-                        existingOrder[symbol].Add(market.Add(symbol, Direction.SELL, (0*sec.bid + 5 * sec.mid) / 5, Math.Abs(synpos)/2));
-                    }
+                    existingOrder[symbol].Add(market.Add(symbol, Direction.SELL, (0 * sec.bid + 5 * sec.mid) / 5, Math.Abs(synpos) / 2));
                 }
-                else if (synpos < -5)
+                else if (synpos < -10)
                 {
-                    if (sec.ask > 0 && sec.mid > 0)
-                    {
-                        existingOrder[symbol].Add(market.Add(symbol, Direction.BUY, (0*sec.ask + 5 * sec.mid) / 5, Math.Abs(synpos)/2));
-                    }
+                    existingOrder[symbol].Add(market.Add(symbol, Direction.BUY, (0 * sec.ask + 5 * sec.mid) / 5, Math.Abs(synpos) / 2));
+                }
+                else
+                {
+                    existingOrder[symbol].Add(market.Add(symbol, Direction.BUY, sec.bid, 10));
+                    existingOrder[symbol].Add(market.Add(symbol, Direction.SELL, sec.ask, 10));
                 }
             }
 		}
