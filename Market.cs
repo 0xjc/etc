@@ -114,10 +114,13 @@ namespace etc
 		private StreamWriter posDumpFile;
 
 		public const int INVALID_ID = -1;
+		private object thisLock = new object();
 		private int currentID = 0;
+
 		private int cash;
-		private ConcurrentDictionary<string, int> positions;
+		private Dictionary<string, int> positions;
 		private DateTime lastPositionsDump;
+
 		private Dictionary<int, ConvertOrder> pendingConverts;
 
 		public Market(NetworkStream stream_, string posDumpFilename)
@@ -126,10 +129,9 @@ namespace etc
 			reader = new StreamReader(stream, Encoding.ASCII);
 			writer = new StreamWriter(stream, Encoding.ASCII);
 			cash = 0;
-			positions = new ConcurrentDictionary<string, int>();
+			positions = new Dictionary<string, int>();
 			lastPositionsDump = DateTime.Now;
 			pendingConverts = new Dictionary<int, ConvertOrder>();
-			File.Delete(posDumpFilename);
 			posDumpFile = File.CreateText(posDumpFilename);
 		}
 
@@ -165,10 +167,13 @@ namespace etc
 		{
 			StringBuilder sb = new StringBuilder();
 			sb.Append("POSITIONS: ");
-			sb.Append(string.Format("[Cash={0}]", cash));
-			foreach (var kvp in positions)
+			lock (thisLock)
 			{
-				sb.Append(string.Format(" [{0}={1}]", kvp.Key, kvp.Value));
+				sb.Append(string.Format("[Cash={0}]", cash));
+				foreach (var kvp in positions)
+				{
+					sb.Append(string.Format(" [{0}={1}]", kvp.Key, kvp.Value));
+				}
 			}
 			sb.AppendLine();
 
@@ -178,191 +183,214 @@ namespace etc
 			Console.Write(dumpText);
 
 			lastPositionsDump = DateTime.Now;
- 		}
+		}
+
+		public void ProcessMessage(string msg)
+		{
+			string[] toks = msg.Split(' ');
+			var tok0 = toks[0].ToUpper();
+
+			if (tok0 == "HELLO")
+			{
+				LogReceive(msg);
+				var args = new HelloEventArgs();
+				args.cash = int.Parse(toks[1]);
+				args.positions = new Dictionary<string, int>();
+				lock (thisLock)
+				{
+					cash = args.cash;
+					for (int i = 2; i < toks.Length; ++i)
+					{
+						string[] symAndPosn = toks[i].Split(':');
+						string sym = symAndPosn[0];
+						int pos = int.Parse(symAndPosn[1]);
+						args.positions.Add(sym, pos);
+						positions[sym] = pos;
+					}
+				}
+				var handler = GotHello;
+				if (handler != null) handler(this, args);
+				DumpCashAndPositions();
+			}
+			else if (tok0 == "OPEN")
+			{
+				LogReceive(msg);
+				var args = new OpenEventArgs();
+				args.symbols = new List<string>();
+				for (int i = 1; i < toks.Length; ++i)
+				{
+					args.symbols.Add(toks[i]);
+				}
+				var handler = Open;
+				if (handler != null) handler(this, args);
+			}
+			else if (tok0 == "CLOSE")
+			{
+				LogReceive(msg);
+				var args = new CloseEventArgs();
+				args.symbols = new List<string>();
+				for (int i = 1; i < toks.Length; ++i)
+				{
+					args.symbols.Add(toks[i]);
+				}
+				var handler = Close;
+				if (handler != null) handler(this, args);
+			}
+			else if (tok0 == "ERROR")
+			{
+				LogReceive(msg);
+				var args = new ErrorEventArgs();
+				args.message = msg.Substring(6);
+				var handler = Error;
+				if (handler != null) handler(this, args);
+			}
+			else if (tok0 == "BOOK")
+			{
+				var args = new BookEventArgs();
+				args.symbol = toks[1];
+				args.buys = new SortedDictionary<int, int>();
+				args.sells = new SortedDictionary<int, int>();
+				if (toks[2] != "BUY") throw new Exception("toks[2] is not BUY");
+				int i;
+				for (i = 3; i < toks.Length; ++i)
+				{
+					if (toks[i].ToUpper() == "SELL") { break; }
+					string[] priceAndSize = toks[i].Split(':');
+					args.buys.Add(int.Parse(priceAndSize[0]), int.Parse(priceAndSize[1]));
+				}
+				++i;
+				for (; i < toks.Length; ++i)
+				{
+					string[] priceAndSize = toks[i].Split(':');
+					args.sells.Add(int.Parse(priceAndSize[0]), int.Parse(priceAndSize[1]));
+				}
+				var handler = Book;
+				if (handler != null) handler(this, args);
+			}
+			else if (tok0 == "TRADE")
+			{
+				var args = new TradeEventArgs();
+				args.symbol = toks[1];
+				args.price = int.Parse(toks[2]);
+				args.size = int.Parse(toks[3]);
+				var handler = Trade;
+				if (handler != null) handler(this, args);
+			}
+			else if (tok0 == "ACK")
+			{
+				LogReceive(msg);
+				var args = new AckEventArgs();
+				args.id = int.Parse(toks[1]);
+				ConvertOrder conv;
+				lock (thisLock)
+				{
+					if (pendingConverts.TryGetValue(args.id, out conv))
+					{
+						pendingConverts.Remove(args.id);
+
+						int sign = (conv.dir == Direction.BUY) ? 1 : -1;
+						int num = sign * conv.size / 20;
+						if (conv.symbol == "XLY")
+						{
+							positions["XLY"] += 20 * num;
+							positions["AMZN"] -= 6 * num;
+							positions["HD"] -= 6 * num;
+							positions["DIS"] -= 8 * num;
+							cash -= 200;
+						}
+						else if (conv.symbol == "XLP")
+						{
+							positions["XLP"] += 20 * num;
+							positions["PG"] -= 12 * num;
+							positions["KO"] -= 12 * num;
+							positions["PM"] -= 6 * num;
+							cash -= 200;
+						}
+						else if (conv.symbol == "XLU")
+						{
+							positions["XLU"] += 20 * num;
+							positions["NEE"] -= 8 * num;
+							positions["DUK"] -= 6 * num;
+							positions["SO"] -= 8 * num;
+							cash -= 200;
+						}
+						else if (conv.symbol == "RSP")
+						{
+							positions["RSP"] += 20 * num;
+							positions["AMZN"] -= 3 * num;
+							positions["HD"] -= 6 * num;
+							positions["DIS"] -= 8 * num;
+							positions["PG"] -= 6 * num;
+							positions["KO"] -= 12 * num;
+							positions["PM"] -= 6 * num;
+							positions["NEE"] -= 4 * num;
+							positions["DUK"] -= 6 * num;
+							positions["SO"] -= 8 * num;
+							cash -= 200;
+						}
+						else
+						{
+							LogError(string.Format("Convert on unknown symbol {0}", conv.symbol));
+						}
+					}
+				}
+				DumpCashAndPositions();
+				var handler = Ack;
+				if (handler != null) handler(this, args);
+			}
+			else if (tok0 == "REJECT")
+			{
+				LogReceive(msg);
+				var args = new RejectEventArgs();
+				args.id = int.Parse(toks[1]);
+				string[] remainingToks = new string[toks.Length - 2];
+				for (int i = 2; i < toks.Length; ++i) remainingToks[i - 2] = toks[i];
+				args.message = string.Join(" ", remainingToks);
+				var handler = Reject;
+				if (handler != null) handler(this, args);
+			}
+			else if (tok0 == "FILL")
+			{
+				LogReceive(msg);
+				var args = new FillEventArgs();
+				args.id = int.Parse(toks[1]);
+				args.symbol = toks[2];
+				args.dir = ParseDirection(toks[3]);
+				args.price = int.Parse(toks[4]);
+				args.size = int.Parse(toks[5]);
+				int sign = (args.dir == Direction.BUY) ? 1 : -1;
+				lock (thisLock)
+				{
+					if (!positions.ContainsKey(args.symbol)) positions[args.symbol] = 0;
+					positions[args.symbol] += sign * args.size;
+					cash -= sign * (args.price * args.size);
+				}
+				DumpCashAndPositions();
+				var handler = Fill;
+				if (handler != null) handler(this, args);
+			}
+			else if (tok0 == "OUT")
+			{
+				LogReceive(msg);
+				var args = new OutEventArgs();
+				args.id = int.Parse(toks[1]);
+				var handler = Out;
+				if (handler != null) handler(this, args);
+			}
+			else
+			{
+				LogError(string.Format("Unknown message: {0}", msg));
+			}
+		}
 
 		public void ReceiveLoop()
 		{
 			string msg;
 			while ((msg = reader.ReadLine()) != null)
 			{
-				string[] toks = msg.Split(' ');
 				try
 				{
-					switch (toks[0].ToUpper())
-					{
-						case "HELLO":
-							{
-								LogReceive(msg);
-								var args = new HelloEventArgs();
-								args.cash = int.Parse(toks[1]);
-								cash = args.cash;
-								args.positions = new Dictionary<string, int>();
-								for (int i = 2; i < toks.Length; ++i)
-								{
-									string[] symAndPosn = toks[i].Split(':');
-									string sym = symAndPosn[0];
-									int pos = int.Parse(symAndPosn[1]);
-									args.positions.Add(sym, pos);
-									positions[sym] = pos;
-								}
-								var handler = GotHello;
-								if (handler != null) handler(this, args);
-								DumpCashAndPositions();
-								break;
-							}
-						case "OPEN":
-							{
-								LogReceive(msg);
-								var args = new OpenEventArgs();
-								args.symbols = new List<string>();
-								for (int i = 1; i < toks.Length; ++i)
-								{
-									args.symbols.Add(toks[i]);
-								}
-								var handler = Open;
-								if (handler != null) handler(this, args);
-								break;
-							}
-						case "CLOSE":
-							{
-								LogReceive(msg);
-								var args = new CloseEventArgs();
-								args.symbols = new List<string>();
-								for (int i = 1; i < toks.Length; ++i)
-								{
-									args.symbols.Add(toks[i]);
-								}
-								var handler = Close;
-								if (handler != null) handler(this, args);
-								break;
-							}
-						case "ERROR":
-							{
-								LogReceive(msg);
-								var args = new ErrorEventArgs();
-								args.message = msg.Substring(6);
-								var handler = Error;
-								if (handler != null) handler(this, args);
-								break;
-							}
-						case "BOOK":
-							{
-								var args = new BookEventArgs();
-								args.symbol = toks[1];
-								args.buys = new SortedDictionary<int, int>();
-								args.sells = new SortedDictionary<int, int>();
-								if (toks[2] != "BUY") throw new Exception("toks[2] is not BUY");
-								int i;
-								for (i = 3; i < toks.Length; ++i)
-								{
-									if (toks[i].ToUpper() == "SELL") { break; }
-									string[] priceAndSize = toks[i].Split(':');
-									args.buys.Add(int.Parse(priceAndSize[0]), int.Parse(priceAndSize[1]));
-								}
-								++i;
-								for (; i < toks.Length; ++i)
-								{
-									string[] priceAndSize = toks[i].Split(':');
-									args.sells.Add(int.Parse(priceAndSize[0]), int.Parse(priceAndSize[1]));
-								}
-								var handler = Book;
-								if (handler != null) handler(this, args);
-								break;
-							}
-						case "TRADE":
-							{
-								var args = new TradeEventArgs();
-								args.symbol = toks[1];
-								args.price = int.Parse(toks[2]);
-								args.size = int.Parse(toks[3]);
-								var handler = Trade;
-								if (handler != null) handler(this, args);
-								break;
-							}
-						case "ACK":
-							{
-								LogReceive(msg);
-								var args = new AckEventArgs();
-								args.id = int.Parse(toks[1]);
-								ConvertOrder conv;
-								if (pendingConverts.TryGetValue(args.id, out conv))
-								{
-									pendingConverts.Remove(args.id);
-									if (conv.symbol == "XLF")
-									{
-										int sign = (conv.dir == Direction.BUY) ? 1 : -1;
-										int num = conv.size / 10;
-										if (conv.size % 10 != 0)
-										{
-											LogError("XLF Conversion with size % 10 != 0");
-										}
-										positions["XLF"] += sign * num * 10;
-										positions["BOND"] -= sign * num * 3;
-										positions["GS"] -= sign * num * 2;
-										positions["MS"] -= sign * num * 3;
-										positions["WFC"] -= sign * num * 2;
-										cash -= 100;
-									}
-									else if (conv.symbol == "VALE" || conv.symbol == "VALBZ")
-									{
-										int sign1 = (conv.dir == Direction.BUY) ? 1 : -1;
-										int sign2 = (conv.symbol == "VALE") ? 1 : -1;
-										int sign = sign1 * sign2;
-										int num = conv.size;
-										positions["VALE"] += sign * num;
-										positions["VALBZ"] -= sign * num;
-										cash -= 10;
-									}
-									else
-									{
-										LogError(string.Format("Convert on unknown symbol {0}", conv.symbol));
-									}
-									DumpCashAndPositions();
-								}
-								var handler = Ack;
-								if (handler != null) handler(this, args);
-								break;
-							}
-						case "REJECT":
-							{
-								LogReceive(msg);
-								var args = new RejectEventArgs();
-								args.id = int.Parse(toks[1]);
-								string[] remainingToks = new string[toks.Length - 2];
-								for (int i = 2; i < toks.Length; ++i) remainingToks[i - 2] = toks[i];
-								args.message = string.Join(" ", remainingToks);
-								var handler = Reject;
-								if (handler != null) handler(this, args);
-								break;
-							}
-						case "FILL":
-							{
-								LogReceive(msg);
-								var args = new FillEventArgs();
-								args.id = int.Parse(toks[1]);
-								args.symbol = toks[2];
-								args.dir = ParseDirection(toks[3]);
-								args.price = int.Parse(toks[4]);
-								args.size = int.Parse(toks[5]);
-								if (!positions.ContainsKey(args.symbol)) positions[args.symbol] = 0;
-								int sign = (args.dir == Direction.BUY) ? 1 : -1;
-								positions[args.symbol] += sign * args.size;
-								cash -= sign * (args.price * args.size);
-								DumpCashAndPositions();
-								var handler = Fill;
-								if (handler != null) handler(this, args);
-								break;
-							}
-						case "OUT":
-							{
-								LogReceive(msg);
-								var args = new OutEventArgs();
-								args.id = int.Parse(toks[1]);
-								var handler = Out;
-								if (handler != null) handler(this, args);
-								break;
-							}
-					}
+					ProcessMessage(msg);
 				}
 				catch (Exception ex)
 				{
