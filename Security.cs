@@ -44,6 +44,11 @@ namespace etc
 				case "NEE": rspWeight = 4; xluWeight = 8; break;
 				case "DUK": rspWeight = 6; xluWeight = 6; break;
 				case "SO": rspWeight = 8; xluWeight = 8; break;
+				case "XLY": break;
+				case "XLP": break;
+				case "XLU": break;
+				case "RSP": break;
+				default: Console.Error.WriteLine(string.Format("----- UNKNOWN SYMBOL: {0} -----", symbol)); break;
 			}
 		}
 
