@@ -223,11 +223,11 @@ namespace etc
                 int synpos = Synpos(memberIndex);
                 if (synpos > 5)
                 {
-					AddOrder(symbol, SELL, (3 * sec.ask + 0 * sec.bid + 7 * sec.mid) / 10, Math.Abs(synpos) + 1);
+					AddOrder(symbol, SELL, (8 * sec.ask + 0 * sec.bid + 2 * sec.mid) / 10, Math.Abs(synpos) + 1);
                 }
                 else if (synpos < -5)
                 {
-					AddOrder(symbol, BUY, (0 * sec.ask + 3 * sec.bid + 7 * sec.mid) / 10, Math.Abs(synpos) + 1);
+					AddOrder(symbol, BUY, (0 * sec.ask + 8 * sec.bid + 2 * sec.mid) / 10, Math.Abs(synpos) + 1);
                 }
                 else
                 {
