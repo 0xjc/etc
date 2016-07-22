@@ -151,6 +151,7 @@ namespace etc
 
 		private void LogSend(string msg)
 		{
+			if (msg.StartsWith("CANCEL")) return;
 			Console.WriteLine("\x1b[36mSEND: " + msg + "\x1b[0m");
 		}
 
@@ -165,7 +166,7 @@ namespace etc
 				int color;
 				if (pre == "ACK") color = 32;
 				else if (pre == "FILL") color = 33;
-				else if (pre == "REJECT") color = 31;
+				else if (pre == "REJECT" || pre == "ERROR") color = 31;
 				else color = 0;
 				colorCode = "\x1b[" + color + "m";
 			}
@@ -254,7 +255,7 @@ namespace etc
 		public void ProcessMessage(string msg)
 		{
 			string[] toks = msg.Split(' ');
-			var tok0 = toks[0].ToUpper();
+			var tok0 = toks[0];
 
 			if (tok0 == "HELLO")
 			{
@@ -320,7 +321,7 @@ namespace etc
 				int i;
 				for (i = 3; i < toks.Length; ++i)
 				{
-					if (toks[i].ToUpper() == "SELL") { break; }
+					if (toks[i] == "SELL") { break; }
 					string[] priceAndSize = toks[i].Split(':');
 					args.buys.Add(int.Parse(priceAndSize[0]), int.Parse(priceAndSize[1]));
 				}
@@ -348,7 +349,7 @@ namespace etc
 			}
 			else if (tok0 == "ACK")
 			{
-				LogReceive(msg);
+				//LogReceive(msg);
 				var args = new AckEventArgs();
 				args.id = int.Parse(toks[1]);
 
@@ -447,7 +448,7 @@ namespace etc
 			}
 			else if (tok0 == "OUT")
 			{
-				LogReceive(msg);
+				//LogReceive(msg);
 				var args = new OutEventArgs();
 				args.id = int.Parse(toks[1]);
 				var handler = Out;
@@ -527,7 +528,7 @@ namespace etc
 			}
 
 			int id = Interlocked.Increment(ref currentID);
-			string msg = string.Format("ADD {0} {1} {2} {3} {4}", id, symbol.ToUpper(), dir, price, size);
+			string msg = string.Format("ADD {0} {1} {2} {3} {4}", id, symbol.ToUpperInvariant(), dir, price, size);
 			QueueSend(msg);
 			return id;
 		}
@@ -542,7 +543,7 @@ namespace etc
 			}
 
 			int id = Interlocked.Increment(ref currentID);
-			string msg = string.Format("CONVERT {0} {1} {2} {3}", id, symbol.ToUpper(), dir, size);
+			string msg = string.Format("CONVERT {0} {1} {2} {3}", id, symbol.ToUpperInvariant(), dir, size);
 			pendingConverts.Add(id, new ConvertOrder(symbol, dir, size));
 			QueueSend(msg);
 			return id;
