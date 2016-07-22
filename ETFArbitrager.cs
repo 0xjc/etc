@@ -118,7 +118,7 @@ namespace etc
 
         public static int MEMBER_COUNT = 9;
         public int RSP_DIVISOR = 20;
-        public int RSP_EDGE = 10;
+        public int RSP_EDGE = 3;
         public Security rsp;
         public Security[] members = new Security[MEMBER_COUNT];
         public string[] memberTickers = new string[MEMBER_COUNT];
@@ -157,7 +157,7 @@ namespace etc
                 DoArb();
                 DoConvert();
                 DoUnposition();
-				Task.Delay(200).Wait();
+				Task.Delay(800).Wait();
 			}
 		}
 		
