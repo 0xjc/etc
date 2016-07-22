@@ -17,7 +17,7 @@ namespace etc
             public int bid; // -1 to start with
 			public int lastTradePrice; // -1 to start with
 			public DateTime? lastTradeTime; // null to start with
-			public double fair; // estimate; -1.0 if unable to calculate (WARNING!)
+			//public double fair; // estimate; -1.0 if unable to calculate (WARNING!)
 			
 			public Security(string symbol_)
 			{
@@ -108,25 +108,43 @@ namespace etc
 			}
 		}
 
-		private List<string> symbols = new List<string> { "BOND", "GS", "MS", "WFC", "XLF" };
+		private List<string> symbols = new List<string> { "AMZN","DIS","DUK","HD","KO","NEE","PG","PM","RSP","SO","XLP","XLU","XLY" };
 
 		private object thisLock = new object();
 		private Market market;
 
 		private Dictionary<string, Security> secs;
-		private Dictionary<string, int> prevOrder;
+		private Dictionary<string, HashSet<int>> existingOrder;
+
+        public static int MEMBER_COUNT = 9;
+        public int RSP_DIVISOR = 20;
+        public int RSP_EDGE = 5;
+        public Security rsp;
+        public Security[] members = new Security[MEMBER_COUNT];
+        public string[] memberTickers = new string[MEMBER_COUNT];
+        public int[] memberWeights = new int[MEMBER_COUNT];
 
 		public ETFArbitrager(Market market_)
 		{
 			market = market_;
 			secs = new Dictionary<string, Security>();
-			prevOrder = new Dictionary<string, int>();
+            existingOrder = new Dictionary<string, HashSet<int>>();
 
 			foreach (string sym in symbols)
 			{
 				secs[sym] = new Security(sym);
-				prevOrder[sym] = Market.INVALID_ID;
+                existingOrder[sym] = new HashSet<int>();
 			}
+            rsp = secs["RSP"];
+            members[0] = secs["AMZN"]; memberTickers[0] = "AMZN"; memberWeights[0] = 3;
+            members[1] = secs["HD"]; memberTickers[1] = "HD"; memberWeights[1] = 6;
+            members[2] = secs["DIS"]; memberTickers[2] = "DIS"; memberWeights[2] = 8;
+            members[3] = secs["PG"]; memberTickers[3] = "PG"; memberWeights[3] = 6;
+            members[4] = secs["KO"]; memberTickers[4] = "KO"; memberWeights[4] = 12;
+            members[5] = secs["PM"]; memberTickers[5] = "PM"; memberWeights[5] = 6;
+            members[6] = secs["NEE"]; memberTickers[6] = "NEE"; memberWeights[6] = 4;
+            members[7] = secs["DUK"]; memberTickers[7] = "DUK"; memberWeights[7] = 6;
+            members[8] = secs["SO"]; memberTickers[8] = "SO"; memberWeights[8] = 8;
 
 			market.Book += Market_Book;
 			market.Trade += Market_Trade;
@@ -136,119 +154,103 @@ namespace etc
 		{
 			while (true)
 			{
-				Readjust();
-				Task.Delay(500).Wait();
+                DoArb();
+                DoConvert();
+                //DoUnposition();
+				Task.Delay(200).Wait();
 			}
 		}
 		
-		private void CancelPrevOrder(string symbol)
+		private void CancelExistingOrder(string symbol)
 		{
-			if (prevOrder[symbol] != Market.INVALID_ID)
-			{
-				market.Cancel(prevOrder[symbol]);
-				prevOrder[symbol] = Market.INVALID_ID;
-			}
+            lock (thisLock)
+            {
+                if (existingOrder[symbol].Count > 0)
+                {
+                    foreach (int orderId in existingOrder[symbol])
+                    {
+                        market.Cancel(orderId);
+                        existingOrder[symbol].Remove(orderId);
+                    }
+                }
+            }
 		}
 
 		private void DoArb()
 		{
-			lock (thisLock)
-			{
-				Security xlf = secs["XLF"];
-				Security bond = secs["BOND"];
-				Security gs = secs["GS"];
-				Security ms = secs["MS"];
-				Security wfc = secs["WFC"];
+            lock (thisLock)
+            {
+                double rsp_buy = 0 - RSP_EDGE;
+                double rsp_sell = RSP_EDGE;
+                for (int i = 0; i < MEMBER_COUNT; i++)
+                {
+                    if (members[i].ask == Market.INVALID_ID || members[i].bid == Market.INVALID_ID)
+                        return;
+                    rsp_buy += (double)(members[i].bid) * (double)memberWeights[i] / (double)RSP_DIVISOR;
+                    rsp_sell += (double)(members[i].ask) * (double)memberWeights[i] / (double)RSP_DIVISOR;
+                }
 
-				if (xlf.fair == 0.0) return;
-				if (bond.fair == 0.0) return;
-				if (gs.fair == 0.0) return;
-				if (ms.fair == 0.0) return;
-				if (wfc.fair == 0.0) return;
-
-				double diff = xlf.fair - 0.3 * bond.fair
-					- 0.2 * gs.fair - 0.3 * ms.fair - 0.2 * wfc.fair;
-
-				CancelPrevOrder("XLF");
-
-				Console.WriteLine(string.Format("ETF: Think (Actual XLF) - (Synthetic XLF) = {0}", diff));
-				if (diff > 8.0)
-				{
-					prevOrder["XLF"] = market.Add("XLF", Direction.SELL, (int)Math.Round(xlf.fair), 10);
-				}
-				else if (diff < -8.0)
-				{
-					prevOrder["XLF"] = market.Add("XLF", Direction.BUY, (int)Math.Round(xlf.fair), 10);
-				}
-			}
+                CancelExistingOrder("RSP");
+                Task.Delay(200).Wait();
+                existingOrder["RSP"].Add(market.Add("RSP", Direction.SELL, (int)Math.Ceiling(rsp_sell), Math.Min(10, 100 + market.GetPosition("RSP"))));
+                existingOrder["RSP"].Add(market.Add("RSP", Direction.BUY, (int)Math.Floor(rsp_buy), Math.Min(10, 100 - market.GetPosition("RSP"))));
+            }
 		}
 
 		private void DoConvert()
 		{
 			lock (thisLock)
 			{
-				int xlfPos = market.GetPosition("XLF");
-				if (xlfPos >= 30)
+                int rspPos = market.GetPosition("RSP");
+                if (rspPos >= 80)
 				{
-					market.Convert("XLF", Direction.SELL, 30);
+                    market.Convert("RSP", Direction.SELL, 20);
 				}
-				else if (xlfPos <= -30)
+                else if (rspPos <= -80)
 				{
-					market.Convert("XLF", Direction.BUY, 30);
+                    market.Convert("RSP", Direction.BUY, 20);
 				}
 			}
 		}
 
 		private void UnpositionOne(string symbol)
 		{
-			var sec = secs[symbol];
-			int pos = market.GetPosition(symbol);
-			CancelPrevOrder(symbol);
-			if (pos > 5)
-			{
-				double fair = sec.fair;
-				int ask = sec.Ask();
-				if (fair != 0.0)
-				{
-					int price = (ask == 0) ? ((int)Math.Round(fair) + 1) : (int)(Math.Round((fair + ask) / 2.0));
-					prevOrder[symbol] = market.Add(symbol, Direction.SELL, price, pos / 2);
-				}
-			}
-			else if (pos < -5)
-			{
-				double fair = sec.fair;
-				int bid = sec.Bid();
-				if (fair != 0.0)
-				{
-					int price = (bid == 0) ? ((int)Math.Round(fair) - 1) : (int)(Math.Round((fair + bid) / 2.0));
-					prevOrder[symbol] = market.Add(symbol, Direction.BUY, price, pos / 2);
-				}
-			}
+            lock (thisLock)
+            {
+                var sec = secs[symbol];
+                int pos = market.GetPosition(symbol);
+                CancelExistingOrder(symbol);
+                if (pos > 5)
+                {
+                    double fair = sec.fair;
+                    int ask = sec.Ask();
+                    if (fair != 0.0)
+                    {
+                        int price = (ask == 0) ? ((int)Math.Round(fair) + 1) : (int)(Math.Round((fair + ask) / 2.0));
+                        existingOrder[symbol] = market.Add(symbol, Direction.SELL, price, pos / 2);
+                    }
+                }
+                else if (pos < -5)
+                {
+                    double fair = sec.fair;
+                    int bid = sec.Bid();
+                    if (fair != 0.0)
+                    {
+                        int price = (bid == 0) ? ((int)Math.Round(fair) - 1) : (int)(Math.Round((fair + bid) / 2.0));
+                        existingOrder[symbol] = market.Add(symbol, Direction.BUY, price, pos / 2);
+                    }
+                }
+            }
 		}
 
 		private void DoUnposition()
 		{
 			lock (thisLock)
 			{
-				UnpositionOne("GS");
-				UnpositionOne("MS");
-				UnpositionOne("WFC");
-			}
-		}
-
-		private void Readjust()
-		{
-			lock (thisLock)
-			{
-				foreach (string sym in symbols)
-				{
-					var sec = secs[sym];
-					sec.RecalcFair();
-				}
-
-				DoArb();
-				//DoConvert();
-				//DoUnposition();
+				for (int i=0;i<MEMBER_COUNT;i++)
+                {
+                    UnpositionOne(memberTickers[i]);
+                }
 			}
 		}
 
@@ -261,6 +263,8 @@ namespace etc
 				{
 					sec.buys = e.buys;
 					sec.sells = e.sells;
+                    sec.ask = sec.Ask();
+                    sec.bid = sec.Bid();
 				}
 			}
 		}
