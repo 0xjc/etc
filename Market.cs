@@ -153,6 +153,12 @@ namespace etc
 			pendingConverts = new Dictionary<int, ConvertOrder>();
 		}
 
+		private string GetTimePretty()
+		{
+			DateTime now = DateTime.Now;
+			return now.TimeOfDay.ToString();
+		}
+
 		public void OutputLoop()
 		{
 			while (true)
@@ -162,7 +168,7 @@ namespace etc
 				if (outputQueue.TryDequeue(out output))
 				{
 					Console.WriteLine(output);
-					outputDumpFile.WriteLine(output);
+					outputDumpFile.WriteLine((GetTimePretty() + " ") + output);
 				}
 			}
 		}
@@ -236,7 +242,7 @@ namespace etc
 		public void DumpBooks()
 		{
 			StringBuilder sb = new StringBuilder();
-			sb.Append("BOOK:");
+			sb.AppendFormat("{0} BOOK:", GetTimePretty());
 			foreach (var sym in Symbols)
 			{
 				Security sec;
@@ -257,7 +263,7 @@ namespace etc
 		public void DumpCashAndPositions()
 		{
 			StringBuilder sb = new StringBuilder();
-			sb.Append("POS:");
+			sb.AppendFormat("{0} POS:", GetTimePretty());
 			double pnl = 0.0;
 			lock (thisLock)
 			{
