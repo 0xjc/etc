@@ -127,7 +127,7 @@ namespace etc
 
         public static int MEMBER_COUNT = 9;
         public int RSP_DIVISOR = 20;
-        public int RSP_EDGE = 5;
+        public int RSP_EDGE = 1;
         public Security rsp;
         public Security[] members = new Security[MEMBER_COUNT];
         public string[] memberTickers = new string[MEMBER_COUNT];
@@ -143,6 +143,8 @@ namespace etc
 			{
 				secs[sym] = new Security(sym);
                 existingOrder[sym] = new HashSet<int>();
+                market.Add(sym, Direction.BUY, 1, 10);
+                market.Add(sym, Direction.SELL, 99999, 10);
 			}
             rsp = secs["RSP"];
             members[0] = secs["AMZN"]; memberTickers[0] = "AMZN"; memberWeights[0] = 3;
