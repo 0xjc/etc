@@ -114,7 +114,10 @@ namespace etc
                 Task.Delay(200).Wait();
                 DoArb();
                 Task.Delay(100).Wait();
-                DoConvert();
+                DoConvert("RSP");
+                DoConvert("XLY");
+                DoConvert("XLP");
+                DoConvert("XLU");
                 Task.Delay(100).Wait();
                 //DoSmartUnposition();
                 //Task.Delay(100).Wait();
@@ -126,7 +129,10 @@ namespace etc
 		private void AddOrder(string symbol, Direction direction, int price, int size)
 		{
 			int id = market.Add(symbol, direction, price, size);
-			existingOrder[symbol].Add(id);
+            if (id >= 0)
+            {
+                existingOrder[symbol].Add(id);
+            }
 		}
 
         private void CancelExistingOrderOnAll()
@@ -164,28 +170,28 @@ namespace etc
                     rsp_buy += (double)(members[i].bid) * (double)members[i].rspWeight / (double)RSP_DIVISOR;
                     rsp_sell += (double)(members[i].ask) * (double)members[i].rspWeight / (double)RSP_DIVISOR;
                 }
-				
                 AddOrder("RSP", SELL, (int)Math.Ceiling(rsp_sell), Math.Min(20, 100 + market.GetPosition("RSP")));
 				AddOrder("RSP", BUY, (int)Math.Floor(rsp_buy), Math.Min(20, 100 - market.GetPosition("RSP")));
 				AddOrder("RSP", SELL, (int)Math.Ceiling(rsp_sell + rsp.mid * 10 / 10000), Math.Min(20, 100 + market.GetPosition("RSP")));
 				AddOrder("RSP", BUY, (int)Math.Floor(rsp_buy - rsp.mid * 10 / 10000), Math.Min(20, 100 - market.GetPosition("RSP")));
 				AddOrder("RSP", SELL, (int)Math.Ceiling(rsp_sell + rsp.mid * 30 / 10000), Math.Min(20, 100 + market.GetPosition("RSP")));
 				AddOrder("RSP", BUY, (int)Math.Floor(rsp_buy - rsp.mid * 30 / 10000), Math.Min(20, 100 - market.GetPosition("RSP")));
+
             }
 		}
 
-		private void DoConvert()
+		private void DoConvert(string ETFSymbol)
 		{
 			lock (thisLock)
 			{
-                int rspPos = market.GetPosition("RSP");
+                int rspPos = market.GetPosition(ETFSymbol);
                 if (rspPos >= 80)
 				{
-                    market.Convert("RSP", Direction.SELL, 80);
+                    market.Convert(ETFSymbol, Direction.SELL, 80);
 				}
                 else if (rspPos <= -80)
 				{
-                    market.Convert("RSP", Direction.BUY, 80);
+                    market.Convert(ETFSymbol, Direction.BUY, 80);
 				}
 			}
 		}
@@ -250,9 +256,32 @@ namespace etc
 
         private void DoSmartUnposition()
         {
-            if (Synpos(0) > 5 && Synpos(1) > 5 && Synpos(2) > 5)
+            lock (thisLock)
             {
-
+                if (Synpos(0) > 0 && Synpos(1) > 3 && Synpos(2) > 4)
+                {
+                    AddOrder("XLY", Direction.SELL, secs["XLY"].mid, 10);
+                }
+                if (Synpos(0) < 0 && Synpos(1) < -3 && Synpos(2) < -4)
+                {
+                    AddOrder("XLY", Direction.BUY, secs["XLY"].mid, 10);
+                }
+                if (Synpos(3) > 3 && Synpos(4) > 6 && Synpos(5) > 3)
+                {
+                    AddOrder("XLP", Direction.SELL, secs["XLP"].mid, 10);
+                }
+                if (Synpos(3) < -3 && Synpos(4) < -6 && Synpos(5) < -3)
+                {
+                    AddOrder("XLP", Direction.BUY, secs["XLP"].mid, 10);
+                }
+                if (Synpos(6) > 2 && Synpos(7) > 3 && Synpos(8) > 4)
+                {
+                    AddOrder("XLU", Direction.SELL, secs["XLU"].mid, 10);
+                }
+                if (Synpos(6) < -2 && Synpos(7) < -3 && Synpos(8) < -4)
+                {
+                    AddOrder("XLU", Direction.BUY, secs["XLU"].mid, 10);
+                }
             }
         }
 
