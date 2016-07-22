@@ -166,13 +166,13 @@ namespace etc
 		public void DumpCashAndPositions()
 		{
 			StringBuilder sb = new StringBuilder();
-			sb.Append("POSITIONS: ");
+			sb.Append("POS: ");
 			lock (thisLock)
 			{
-				sb.Append(string.Format("[Cash={0}]", cash));
+				sb.Append(string.Format("$={0}", cash));
 				foreach (var kvp in positions)
 				{
-					sb.Append(string.Format(" [{0}={1}]", kvp.Key, kvp.Value));
+					sb.Append(string.Format(" {0}={1}", kvp.Key, kvp.Value));
 				}
 			}
 			sb.AppendLine();
