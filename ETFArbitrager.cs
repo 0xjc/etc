@@ -13,33 +13,39 @@ namespace etc
 			public string symbol;
 			public SortedDictionary<int, int> buys;
 			public SortedDictionary<int, int> sells;
-			public int lastTradePrice; // 0 to start with
+            public int ask; // -1 to start with
+            public int bid; // -1 to start with
+			public int lastTradePrice; // -1 to start with
 			public DateTime? lastTradeTime; // null to start with
-			public double fair; // estimate; 0.0 if unable to calculate (WARNING!)
+			public double fair; // estimate; -1.0 if unable to calculate (WARNING!)
 			
 			public Security(string symbol_)
 			{
 				symbol = symbol_;
 				buys = new SortedDictionary<int, int>();
 				sells = new SortedDictionary<int, int>();
-				if (symbol == "BOND") { fair = 1000.0; }
+				//if (symbol == "BOND") { fair = 1000.0; }
+                ask = bid = -1;
+                lastTradePrice = -1;
 			}
 
 			public int Bid()
 			{
-				if (buys.Count == 0) return 0;
+				if (buys.Count == 0) return -1;
 				return buys.Last().Key;
 			}
 
 			public int Ask()
 			{
-				if (sells.Count == 0) return 0;
+				if (sells.Count == 0) return -1;
 				return sells.First().Key;
 			}
 
-			public void RecalcFair()
+			// do not use  
+            /*
+            public void RecalcFair()
 			{
-				if (symbol == "BOND") return;
+				//if (symbol == "BOND") return;
 
 				// weight lastTradePrice and mid based on lastTradeTime recency
 				double lastTradeWeight = 0.0;
@@ -83,6 +89,7 @@ namespace etc
 					}
 				}
 			}
+            */
 		}
 
 		class Order
