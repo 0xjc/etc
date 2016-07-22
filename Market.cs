@@ -215,11 +215,13 @@ namespace etc
 			else return 0;
 		}
 
-		// Creates a snapshot of the current security (safe)
-		public Security GetSecurity(string symbol)
+		public void UpdateSecurity(Security dest)
 		{
-			Security sec = GetSecurityInternal(symbol);
-			return sec.Clone();
+			Security src = GetSecurityInternal(dest.symbol);
+			lock (src.GetLock())
+			{
+				dest.UpdateFrom(src);
+			}
 		}
 
 		private Security GetSecurityInternal(string symbol)

@@ -8,56 +8,6 @@ namespace etc
 {
 	class ETFArbitrager
 	{
-		public class Security
-		{
-			public string symbol;
-			public SortedDictionary<int, int> buys;
-			public SortedDictionary<int, int> sells;
-            public int ask; // -1 to start with
-            public int bid; // -1 to start with
-            public int mid;
-			public int lastTradePrice; // -1 to start with
-			public DateTime? lastTradeTime; // null to start with
-			//public double fair; // estimate; -1.0 if unable to calculate (WARNING!)
-
-            public int rspWeight;
-            public int xlyWeight;
-            public int xlpWeight;
-            public int xluWeight;
-
-			public Security(string symbol_)
-			{
-				symbol = symbol_;
-				buys = new SortedDictionary<int, int>();
-				sells = new SortedDictionary<int, int>();
-				//if (symbol == "BOND") { fair = 1000.0; }
-                ask = bid = -1;
-                lastTradePrice = -1;
-                lastTradeTime = null;
-                rspWeight = xlyWeight = xlpWeight = xluWeight = 0;
-			}
-
-			public int Bid()
-			{
-				if (buys.Count == 0) return -1;
-				return buys.Last().Key;
-			}
-
-			public int Ask()
-			{
-				if (sells.Count == 0) return -1;
-				return sells.First().Key;
-			}
-            public int Mid()
-            {
-                if (bid<0 || ask<0)
-                {
-                    return -1;
-                }
-                return (int)((ask+bid)/2);
-            }
-		}
-
 		private List<string> symbols;
 
 		private object thisLock = new object();
@@ -92,18 +42,24 @@ namespace etc
                 existingOrder[sym] = new HashSet<int>();
 			}
             rsp = secs["RSP"];
-            members[0] = secs["AMZN"]; members[0].rspWeight = 3; members[0].xlyWeight = 6;
-            members[1] = secs["HD"]; ; members[1].rspWeight = 6; members[1].xlyWeight = 6;
-            members[2] = secs["DIS"]; members[2].rspWeight = 8; members[2].xlyWeight = 8;
-            members[3] = secs["PG"]; members[3].rspWeight = 6; members[3].xlpWeight = 12;
-            members[4] = secs["KO"]; members[4].rspWeight = 12; members[4].xlpWeight = 12;
-            members[5] = secs["PM"]; members[5].rspWeight = 6; members[5].xlpWeight = 6;
-            members[6] = secs["NEE"]; members[6].rspWeight = 4; members[6].xluWeight = 8;
-            members[7] = secs["DUK"]; members[7].rspWeight = 6; members[7].xluWeight = 6;
-            members[8] = secs["SO"]; members[8].rspWeight = 8; members[8].xluWeight = 8;
+			members[0] = secs["AMZN"];
+			members[1] = secs["HD"];
+			members[2] = secs["DIS"];
+			members[3] = secs["PG"];
+			members[4] = secs["KO"];
+			members[5] = secs["PM"];
+			members[6] = secs["NEE"];
+			members[7] = secs["DUK"];
+			members[8] = secs["SO"];
+		}
 
-			market.Book += Market_Book;
-			market.Trade += Market_Trade;
+		private void UpdateSecurities()
+		{
+			foreach (string sym in symbols)
+			{
+				Security sec = secs[sym];
+				market.UpdateSecurity(sec);
+			}
 		}
 
 		public void Main()
@@ -112,16 +68,19 @@ namespace etc
 			{
                 CancelExistingOrderOnAll();
                 Task.Delay(200).Wait();
+				UpdateSecurities();
                 DoArb();
                 Task.Delay(100).Wait();
-                DoConvert("RSP");
+				UpdateSecurities();
+				DoConvert("RSP");
                 DoConvert("XLY");
                 DoConvert("XLP");
                 DoConvert("XLU");
                 Task.Delay(100).Wait();
-                //DoSmartUnposition();
-                //Task.Delay(100).Wait();
-                DoUnposition();
+				UpdateSecurities();
+				//DoSmartUnposition();
+				//Task.Delay(100).Wait();
+				DoUnposition();
 				Task.Delay(900).Wait();
 			}
 		}
@@ -387,34 +346,5 @@ namespace etc
                 }
             }
         }
-
-		private void Market_Book(object sender, BookEventArgs e)
-		{
-			Security sec;
-			if (secs.TryGetValue(e.symbol, out sec))
-			{
-				lock (thisLock)
-				{
-					sec.buys = e.buys;
-					sec.sells = e.sells;
-					sec.ask = sec.Ask();
-					sec.bid = sec.Bid();
-                    sec.mid = sec.Mid();
-				}
-			}
-		}
-
-		private void Market_Trade(object sender, TradeEventArgs e)
-		{
-			Security sec;
-			if (secs.TryGetValue(e.symbol, out sec))
-			{
-				lock (thisLock)
-				{
-					sec.lastTradePrice = e.price;
-					sec.lastTradeTime = DateTime.Now;
-				}
-			}
-		}
 	}
 }

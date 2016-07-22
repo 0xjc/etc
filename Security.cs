@@ -100,21 +100,16 @@ namespace etc
 			return (bid + ask) / 2;
 		}
 
-		public Security Clone()
+		public void UpdateFrom(Security source)
 		{
-			var sec = new Security(symbol);
-			lock (thisLock)
-			{
-				sec.buys = new SortedDictionary<int, int>(buys);
-				sec.sells = new SortedDictionary<int, int>(sells);
-				sec.bid = bid;
-				sec.ask = ask;
-				sec.mid = mid;
-				sec.lastTradePrice = lastTradePrice;
-				sec.lastTradeSize = lastTradeSize;
-				sec.lastTradeTime = lastTradeTime;
-			}
-			return sec;
+			buys = new SortedDictionary<int, int>(source.buys);
+			sells = new SortedDictionary<int, int>(source.sells);
+			bid = source.bid;
+			ask = source.ask;
+			mid = source.mid;
+			lastTradePrice = source.lastTradePrice;
+			lastTradeSize = source.lastTradeSize;
+			lastTradeTime = source.lastTradeTime;
 		}
 	}
 }
