@@ -228,18 +228,33 @@ namespace etc
 		{
 			StringBuilder sb = new StringBuilder();
 			sb.Append("POS:");
+			double pnl = 0.0;
 			lock (thisLock)
 			{
 				sb.Append(string.Format(" $={0}", cash));
+				pnl += cash;
 				foreach (var sym in Symbols)
 				{
 					int pos;
+					Security sec;
 					if (positions.TryGetValue(sym, out pos))
 					{
 						sb.Append(string.Format(" {0}={1}", sym, pos));
 					}
+					if (pnl != -1.0)
+					{
+						if (securities.TryGetValue(sym, out sec))
+						{
+							int mid = sec.mid;
+							if (mid == -1)
+								pnl = -1.0;
+							else
+								pnl += pos * mid;
+						}
+					}
 				}
 			}
+			sb.AppendFormat(" PnL={0}", (pnl == -1.0) ? "???" : ((int)Math.Round(pnl)).ToString());
 			string dumpText = sb.ToString();
 			posDumpFile.WriteLine(dumpText);
 			posDumpFile.Flush();
