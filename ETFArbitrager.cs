@@ -127,7 +127,7 @@ namespace etc
 
         public static int MEMBER_COUNT = 9;
         public int RSP_DIVISOR = 20;
-        public int RSP_EDGE = 1;
+        public int RSP_EDGE = 5;
         public Security rsp;
         public Security[] members = new Security[MEMBER_COUNT];
         public string[] memberTickers = new string[MEMBER_COUNT];
@@ -242,16 +242,16 @@ namespace etc
                 int synpos = pos + (int)Math.Round(market.GetPosition("RSP") * memberWeights[memberIndex] / ((double)RSP_DIVISOR));
                 if (synpos > 10)
                 {
-                    existingOrder[symbol].Add(market.Add(symbol, Direction.SELL, (0 * sec.bid + 5 * sec.mid) / 5, Math.Abs(synpos) / 2));
+                    existingOrder[symbol].Add(market.Add(symbol, Direction.SELL, (5 * sec.ask + 5 * sec.mid) / 10, Math.Abs(synpos)));
                 }
                 else if (synpos < -10)
                 {
-                    existingOrder[symbol].Add(market.Add(symbol, Direction.BUY, (0 * sec.ask + 5 * sec.mid) / 5, Math.Abs(synpos) / 2));
+                    existingOrder[symbol].Add(market.Add(symbol, Direction.BUY, (5 * sec.bid + 5 * sec.mid) / 10, Math.Abs(synpos)));
                 }
                 else
                 {
-                    existingOrder[symbol].Add(market.Add(symbol, Direction.BUY, sec.bid, 10));
-                    existingOrder[symbol].Add(market.Add(symbol, Direction.SELL, sec.ask, 10));
+                    existingOrder[symbol].Add(market.Add(symbol, Direction.BUY, sec.bid, 5));
+                    existingOrder[symbol].Add(market.Add(symbol, Direction.SELL, sec.ask, 5));
                 }
             }
 		}
