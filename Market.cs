@@ -298,12 +298,15 @@ namespace etc
 				LogReceive(msg);
 				var args = new AckEventArgs();
 				args.id = int.Parse(toks[1]);
+
+				bool positionChanged = false;
 				ConvertOrder conv;
 				lock (thisLock)
 				{
 					if (pendingConverts.TryGetValue(args.id, out conv))
 					{
 						pendingConverts.Remove(args.id);
+						positionChanged = true;
 
 						int sign = (conv.dir == Direction.BUY) ? 1 : -1;
 						int num = sign * conv.size / 20;
@@ -351,7 +354,10 @@ namespace etc
 						}
 					}
 				}
-				DumpCashAndPositions();
+				if (positionChanged)
+				{
+					DumpCashAndPositions();
+				}
 				var handler = Ack;
 				if (handler != null) handler(this, args);
 			}
