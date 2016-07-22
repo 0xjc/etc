@@ -471,7 +471,7 @@ namespace etc
 				}
 				catch (Exception ex)
 				{
-					LogError("Exn in Receive processing: " + ex.Message);
+					LogError("\x1b[31mEXN in Receive processing: " + ex.Message + "\x1b[0m");
 				}
 				var now = DateTime.Now;
 				if (now - lastPosDump > TimeSpan.FromSeconds(1.0))
