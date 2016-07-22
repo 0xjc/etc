@@ -137,7 +137,7 @@ namespace etc
 
 		private void LogSend(string msg)
 		{
-			Console.WriteLine("\033[36mSEND: " + msg + "\033[0m");
+			Console.WriteLine("\x1b[36mSEND: " + msg + "\x1b[0m");
 		}
 
 		private void LogReceive(string msg)
@@ -166,13 +166,13 @@ namespace etc
 		public void DumpCashAndPositions()
 		{
 			StringBuilder sb = new StringBuilder();
-			sb.Append("POSITIONS: ");
+			sb.Append("POS: ");
 			lock (thisLock)
 			{
-				sb.Append(string.Format("[Cash={0}]", cash));
+				sb.Append(string.Format("$={0}", cash));
 				foreach (var kvp in positions)
 				{
-					sb.Append(string.Format(" [{0}={1}]", kvp.Key, kvp.Value));
+					sb.Append(string.Format(" {0}={1}", kvp.Key, kvp.Value));
 				}
 			}
 			sb.AppendLine();
