@@ -3,6 +3,7 @@
 
 *.sh
 *.txt
+*.mlpd
 
 # User-specific files
 *.suo
