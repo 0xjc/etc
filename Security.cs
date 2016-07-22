@@ -19,6 +19,11 @@ namespace etc
 		public int lastTradeSize; // -1 = invalid
 		public DateTime lastTradeTime; // DateTime.MinValue to start with
 
+		public int rspWeight;
+		public int xlyWeight;
+		public int xlpWeight;
+		public int xluWeight;
+
 		public Security(string symbol_)
 		{
 			symbol = symbol_;
@@ -26,6 +31,20 @@ namespace etc
 			sells = new SortedDictionary<int, int>();
 			//if (symbol == "BOND") { fair = 1000.0; }
 			bid = ask = mid = lastTradePrice = -1;
+
+			rspWeight = xlyWeight = xlpWeight = xluWeight = 0;
+			switch (symbol)
+			{
+				case "AMZN": rspWeight = 3; xlyWeight = 6; break;
+				case "HD": rspWeight = 6; xlyWeight = 6; break;
+				case "DIS": rspWeight = 8; xlyWeight = 8; break;
+				case "PG": rspWeight = 6; xlpWeight = 12; break;
+				case "KO": rspWeight = 12; xlpWeight = 12; break;
+				case "PM": rspWeight = 6; xlpWeight = 6; break;
+				case "NEE": rspWeight = 4; xluWeight = 8; break;
+				case "DUK": rspWeight = 6; xluWeight = 6; break;
+				case "SO": rspWeight = 8; xluWeight = 8; break;
+			}
 		}
 
 		public object GetLock()
