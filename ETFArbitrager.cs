@@ -127,7 +127,7 @@ namespace etc
 
         public static int MEMBER_COUNT = 9;
         public int RSP_DIVISOR = 20;
-        public int RSP_EDGE = 1;
+        public int RSP_EDGE = 5;
         public Security rsp;
         public Security[] members = new Security[MEMBER_COUNT];
         public string[] memberTickers = new string[MEMBER_COUNT];
@@ -163,31 +163,35 @@ namespace etc
 		{
 			while (true)
 			{
-                CancelExistingOrder("RSP");
+                CancelExistingOrderOnAll();
                 Task.Delay(200).Wait();
                 DoArb();
                 DoConvert();
                 DoUnposition();
-				Task.Delay(800).Wait();
+				Task.Delay(900).Wait();
 			}
 		}
 		
+
+        private void CancelExistingOrderOnAll()
+        {
+            foreach (string sym in symbols)
+            {
+                CancelExistingOrder(sym);
+            }
+        }
 		private void CancelExistingOrder(string symbol)
 		{
             lock (thisLock)
             {
-                //Console.WriteLine("cancel orders" + " order counts " + existingOrder[symbol].Count);
                 if (existingOrder[symbol].Count > 0)
                 {
                     foreach (int orderId in existingOrder[symbol])
                     {
-                        //Console.WriteLine("cancel orders" + " orderid " + orderId);
                         market.Cancel(orderId);
-                        //Console.WriteLine("cancel orders" + " remove " + orderId);
-                        //existingOrder[symbol].Remove(orderId);
                     }
                 }
-                existingOrder[symbol] = new HashSet<int>();
+                existingOrder[symbol].Clear();
             }
 		}
 
@@ -205,8 +209,6 @@ namespace etc
                     rsp_sell += (double)(members[i].ask) * (double)memberWeights[i] / (double)RSP_DIVISOR;
                 }
 
-                
-                //Console.WriteLine("ETF DoArb() : " + "rsp_buy");
                 existingOrder["RSP"].Add(market.Add("RSP", Direction.SELL, (int)Math.Ceiling(rsp_sell), Math.Min(20, 100 + market.GetPosition("RSP"))));
                 existingOrder["RSP"].Add(market.Add("RSP", Direction.BUY, (int)Math.Floor(rsp_buy), Math.Min(20, 100 - market.GetPosition("RSP"))));
             }
@@ -234,36 +236,33 @@ namespace etc
             {
                 string symbol = memberTickers[memberIndex];
                 var sec = secs[symbol];
-                CancelExistingOrder(symbol);
+                if (sec.ask < 0 || sec.bid < 0)
+                    return;
                 int pos = market.GetPosition(symbol);
                 int synpos = pos + (int)Math.Round(market.GetPosition("RSP") * memberWeights[memberIndex] / ((double)RSP_DIVISOR));
-                if (synpos > 3)
+                if (synpos > 5)
                 {
-                    if (sec.bid > 0 && sec.mid > 0)
-                    {
-                        existingOrder[symbol].Add(market.Add(symbol, Direction.SELL, (0*sec.bid + 5 * sec.mid) / 5, Math.Abs(synpos)));
-                    }
+                    existingOrder[symbol].Add(market.Add(symbol, Direction.SELL, (3 * sec.ask + 7 * sec.mid) / 10, Math.Abs(synpos)));
                 }
-                else if (synpos < -3)
+                else if (synpos < -5)
                 {
-                    if (sec.ask > 0 && sec.mid > 0)
-                    {
-                        existingOrder[symbol].Add(market.Add(symbol, Direction.BUY, (0*sec.ask + 5 * sec.mid) / 5, Math.Abs(synpos)));
-                    }
+                    existingOrder[symbol].Add(market.Add(symbol, Direction.BUY, (3 * sec.bid + 7 * sec.mid) / 10, Math.Abs(synpos)));
+                }
+                else
+                {
+                    existingOrder[symbol].Add(market.Add(symbol, Direction.BUY, sec.bid, 10));
+                    existingOrder[symbol].Add(market.Add(symbol, Direction.SELL, sec.ask, 10));
                 }
             }
 		}
 
-		private void DoUnposition()
-		{
-			lock (thisLock)
-			{
-				for (int i=0;i<MEMBER_COUNT;i++)
-                {
-                    UnpositionOne(i);
-                }
-			}
-		}
+        private void DoUnposition()
+        {
+            for (int i = 0; i < MEMBER_COUNT; i++)
+            {
+                UnpositionOne(i);
+            }
+        }
 
 		private void Market_Book(object sender, BookEventArgs e)
 		{
