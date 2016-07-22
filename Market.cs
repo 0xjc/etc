@@ -184,6 +184,11 @@ namespace etc
 			outputAvailable.Release();
 		}
 
+		public void Log(string msg)
+		{
+			QueueOutput(msg);
+		}
+
 		private void LogSend(string msg)
 		{
 			if (msg.StartsWith("CANCEL")) return;
