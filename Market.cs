@@ -175,7 +175,7 @@ namespace etc
 
 		private void LogError(string msg)
 		{
-			Console.Error.WriteLine("ERROR: " + msg);
+			Console.Error.WriteLine("\x1b[31mERROR: " + msg + "\x1b[0m");
 		}
 
 		public Direction ParseDirection(string s)
@@ -225,7 +225,7 @@ namespace etc
 			string dumpText = sb.ToString();
 			bookDumpFile.WriteLine(dumpText);
 			bookDumpFile.FlushAsync();
-			Console.WriteLine(dumpText);
+			//Console.WriteLine(dumpText);
 			lastBookDump = DateTime.Now;
 		}
 
@@ -248,7 +248,7 @@ namespace etc
 			string dumpText = sb.ToString();
 			posDumpFile.WriteLine(dumpText);
 			posDumpFile.FlushAsync();
-			Console.WriteLine(dumpText);
+			//Console.WriteLine(dumpText);
 			lastPosDump = DateTime.Now;
 		}
 
@@ -471,7 +471,7 @@ namespace etc
 				}
 				catch (Exception ex)
 				{
-					LogError("\x1b[31mEXN in Receive processing: " + ex.Message + "\x1b[0m");
+					LogError("EXN in Receive processing: " + ex.StackTrace);
 				}
 				var now = DateTime.Now;
 				if (now - lastPosDump > TimeSpan.FromSeconds(1.0))
