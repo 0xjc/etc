@@ -34,38 +34,42 @@ namespace etc
 
         public int Main()
         {
-            market.GotHello += market_GotHello;
-            market.Open += market_Open;
-            market.Close += market_Close;
-            market.Fill += market_Fill;
-            market.Ack += market_Ack;
-
-            while (true)
+            lock (thisLock)
             {
-                if (canTradeBond)
+
+                market.GotHello += market_GotHello;
+                market.Open += market_Open;
+                market.Close += market_Close;
+                market.Fill += market_Fill;
+                market.Ack += market_Ack;
+
+                while (true)
                 {
-                    int bondPosition = market.GetPosition(bondTicker);
-                    if (bondPosition > 80 && sellOrder < 90)
+                    if (canTradeBond)
                     {
-                        AddOrder(bondTicker, Direction.SELL, 1000, 5);
-                    }
-                    if (bondPosition < -80 && buyOrder < 90)
-                    {
-                        AddOrder(bondTicker, Direction.BUY, 1000, 5);
+                        int bondPosition = market.GetPosition(bondTicker);
+                        if (bondPosition > 80 && sellOrder < 90)
+                        {
+                            AddOrder(bondTicker, Direction.SELL, 1000, 5);
+                        }
+                        if (bondPosition < -80 && buyOrder < 90)
+                        {
+                            AddOrder(bondTicker, Direction.BUY, 1000, 5);
 
-                    }
+                        }
 
-                    if (bondPosition + buyOrder < 85 && buyOrder < 80)
-                    {
-                        AddOrder(bondTicker, Direction.BUY, 999, 97 - (bondPosition + buyOrder));
-                    }
-                    if (bondPosition - sellOrder > -85 && sellOrder < 80)
-                    {
-                        AddOrder(bondTicker, Direction.SELL, 1001, 97 + (bondPosition - sellOrder));
-                    }
+                        if (bondPosition + buyOrder < 85 && buyOrder < 80)
+                        {
+                            AddOrder(bondTicker, Direction.BUY, 999, 97 - (bondPosition + buyOrder));
+                        }
+                        if (bondPosition - sellOrder > -85 && sellOrder < 80)
+                        {
+                            AddOrder(bondTicker, Direction.SELL, 1001, 97 + (bondPosition - sellOrder));
+                        }
 
 
-                    Task.Delay(10).Wait();
+                        Task.Delay(10).Wait();
+                    }
                 }
             }
         }

@@ -33,97 +33,106 @@ namespace etc
 
         public int Main()
         {
-            market.GotHello += market_GotHello;
-            market.Open += market_Open;
-            market.Close += market_Close;
-            market.Ack += market_Ack;
-            market.Fill += market_Fill;
-            market.Book += market_Book;
-
-            while (true)
+            lock (thisLock)
             {
-                if (canTrade)
+                market.GotHello += market_GotHello;
+                market.Open += market_Open;
+                market.Close += market_Close;
+                market.Ack += market_Ack;
+                market.Fill += market_Fill;
+                market.Book += market_Book;
+
+                while (true)
                 {
-                    int adr = market.GetPosition(adrTicker); 
-                    int ord = market.GetPosition(ordTicker);
-                    if (Math.Abs(adr) >= 10)
+                    if (canTrade)
                     {
-                        CancelAllOrder();
-                        Direction dir = Direction.BUY;
-                        if (adr > 0)
-                            dir = Direction.SELL;
-                        market.Convert(adrTicker, dir, Math.Abs(adr));
-                        ord += adr;
-                        adr = 0;
-                        
-                    }
+                        int adr = market.GetPosition(adrTicker);
+                        int ord = market.GetPosition(ordTicker);
+                        if (Math.Abs(adr) >= 10)
+                        {
+                            CancelAllOrder();
+                            Direction dir = Direction.BUY;
+                            if (adr > 0)
+                                dir = Direction.SELL;
+                            market.Convert(adrTicker, dir, Math.Abs(adr));
+                            ord += adr;
+                            adr = 0;
 
-                    if (ord != 0)
-                    {
-                        Direction dir = Direction.BUY;
-                        int price;
-                        if (ord > 0)
-                        {
-                            dir = Direction.SELL;
-                            price = ordBid;
                         }
-                        else
+
+                        if (ord != 0)
                         {
-                            dir = Direction.BUY;
-                            price = ordAsk;
+                            Direction dir = Direction.BUY;
+                            int price;
+                            if (ord > 0)
+                            {
+                                dir = Direction.SELL;
+                                price = ordBid;
+                            }
+                            else
+                            {
+                                dir = Direction.BUY;
+                                price = ordAsk;
+                            }
+                            int orderId = market.Add(ordTicker, dir, price, 1);
+                            Task.Delay(200).Wait();
+                            market.Cancel(orderId);
                         }
-                        int orderId = market.Add(ordTicker, dir, price, 1);
+
                         Task.Delay(200).Wait();
-                        market.Cancel(orderId);
                     }
-
-                    Task.Delay(200).Wait();
                 }
             }
         }
 
         public void CancelAllOrder()
         {
-            if (adrBuyOrderID >= 0)
+            lock (thisLock)
             {
-                market.Cancel(adrBuyOrderID);
-                adrBuyOrderID = -1;
+                if (adrBuyOrderID >= 0)
+                {
+                    market.Cancel(adrBuyOrderID);
+                    adrBuyOrderID = -1;
+                }
+                if (adrSellOrderID >= 0)
+                {
+                    market.Cancel(adrSellOrderID);
+                    adrSellOrderID = -1;
+                }
+                //Task.Delay(100).Wait();
             }
-            if (adrSellOrderID >= 0)
-            {
-                market.Cancel(adrSellOrderID);
-                adrSellOrderID = -1;
-            }
-            //Task.Delay(100).Wait();
         }
 
         void market_Book(object sender, BookEventArgs e)
         {
-            string ticker = e.symbol;
-            if (ticker == ordTicker)
+            lock (thisLock)
             {
-                if ((e.buys.Count > 0) && (e.sells.Count > 0))
+                string ticker = e.symbol;
+                if (ticker == ordTicker)
                 {
-                    CancelAllOrder();
+                    if ((e.buys.Count > 0) && (e.sells.Count > 0))
+                    {
+                        CancelAllOrder();
 
-                    ordBid = e.buys.Last().Key;
-                    ordAsk = e.sells.First().Key;
+                        ordBid = e.buys.Last().Key;
+                        ordAsk = e.sells.First().Key;
 
-                    int adr = market.GetPosition(adrTicker); 
-                    //Console.WriteLine("I am adding buy order.   " + "adr = " + adr + "I am going to buy " + Math.Min(10 - adr, 10) + "shares.");
-                    adrBuyOrderID = market.Add(adrTicker, Direction.BUY, ordBid - 2, Math.Max(0, Math.Min(10 - adr, 3)));
-                    //Console.WriteLine("I am adding sell order.   " + "adr = " + adr + "I am going to sell " + Math.Min(10 + adr, 10) + "shares.");
-                    adrSellOrderID = market.Add(adrTicker, Direction.SELL, ordAsk + 2, Math.Max(0, Math.Min(10 + adr, 3)));
+                        int adr = market.GetPosition(adrTicker);
+                        //Console.WriteLine("I am adding buy order.   " + "adr = " + adr + "I am going to buy " + Math.Min(10 - adr, 10) + "shares.");
+                        adrBuyOrderID = market.Add(adrTicker, Direction.BUY, ordBid - 2, Math.Max(0, Math.Min(10 - adr, 3)));
+                        //Console.WriteLine("I am adding sell order.   " + "adr = " + adr + "I am going to sell " + Math.Min(10 + adr, 10) + "shares.");
+                        adrSellOrderID = market.Add(adrTicker, Direction.SELL, ordAsk + 2, Math.Max(0, Math.Min(10 + adr, 3)));
 
-                    //Task.Delay(200).Wait();
+                        //Task.Delay(200).Wait();
+                    }
                 }
-            }
-            if (ticker == adrTicker)
-            {
-                if ((e.buys.Count > 0) && (e.sells.Count > 0))
+                if (ticker == adrTicker)
                 {
-                    adrBid = e.buys.Last().Key;
-                    adrAsk = e.sells.First().Key;
+                    if ((e.buys.Count > 0) && (e.sells.Count > 0))
+                    {
+                        adrBid = e.buys.Last().Key;
+                        adrAsk = e.sells.First().Key;
+                    }
                 }
             }
         }
