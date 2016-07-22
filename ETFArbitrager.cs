@@ -217,32 +217,46 @@ namespace etc
             {
                 string symbol = members[memberIndex].symbol;
                 var sec = secs[symbol];
-                if (sec.ask < 0 || sec.bid < 0)
-                    return;
+                if (sec.ask > 0 && sec.bid > 0)
+                {
 
-                int synpos = Synpos(memberIndex);
-                if (synpos > 5)
-                {
-					AddOrder(symbol, SELL, (8 * sec.ask + 0 * sec.bid + 2 * sec.mid) / 10, Math.Abs(synpos) + 1);
-                }
-                else if (synpos < -5)
-                {
-					AddOrder(symbol, BUY, (0 * sec.ask + 8 * sec.bid + 2 * sec.mid) / 10, Math.Abs(synpos) + 1);
+                    int synpos = Synpos(memberIndex);
+                    if (synpos > 5)
+                    {
+                        AddOrder(symbol, SELL, (8 * sec.ask + 0 * sec.bid + 2 * sec.mid) / 10, Math.Abs(synpos) + 1);
+                    }
+                    else if (synpos < -5)
+                    {
+                        AddOrder(symbol, BUY, (0 * sec.ask + 8 * sec.bid + 2 * sec.mid) / 10, Math.Abs(synpos) + 1);
+                    }
+                    else
+                    {
+                        if ((sec.ask - sec.bid) > sec.mid * 5 / 10000)
+                        {
+                            AddOrder(symbol, BUY, sec.bid + 1, 2);
+                            AddOrder(symbol, SELL, sec.ask - 1, 2);
+                        }
+                    }
+                    AddOrder(symbol, BUY, sec.bid - sec.mid * 10 / 10000, 2);
+                    AddOrder(symbol, SELL, sec.ask + sec.mid * 10 / 10000, 2);
+                    AddOrder(symbol, BUY, sec.bid - sec.mid * 30 / 10000, 5);
+                    AddOrder(symbol, SELL, sec.ask + sec.mid * 30 / 10000, 5);
+                    AddOrder(symbol, BUY, sec.bid - sec.mid * 100 / 10000, 12);
+                    AddOrder(symbol, SELL, sec.ask + sec.mid * 100 / 10000, 12);
                 }
                 else
                 {
-                    if ((sec.ask - sec.bid)  > sec.mid * 5 / 10000)
+                    if (sec.ask > 0)
                     {
-						AddOrder(symbol, BUY, sec.bid + 1, 2);
-						AddOrder(symbol, SELL, sec.ask - 1, 2);
+                        AddOrder(symbol, SELL, sec.ask + sec.ask * 10 / 10000, 5);
+                        AddOrder(symbol, BUY, sec.ask / 2, 25);
+                    }
+                    else if (sec.bid > 0)
+                    {
+                        AddOrder(symbol, BUY, sec.bid - sec.bid * 10 / 10000, 5);
+                        AddOrder(symbol, SELL, sec.bid * 2, 25);
                     }
                 }
-				AddOrder(symbol, BUY, sec.bid - sec.mid * 10 / 10000, 2);
-				AddOrder(symbol, SELL, sec.ask + sec.mid * 10 / 10000, 2);
-				AddOrder(symbol, BUY, sec.bid - sec.mid * 30 / 10000, 5);
-				AddOrder(symbol, SELL, sec.ask + sec.mid * 30 / 10000, 5);
-				AddOrder(symbol, BUY, sec.bid - sec.mid * 100 / 10000, 12);
-				AddOrder(symbol, SELL, sec.ask + sec.mid * 100 / 10000, 12);
             }
 		}
 
@@ -258,29 +272,118 @@ namespace etc
         {
             lock (thisLock)
             {
-                if (Synpos(0) > 0 && Synpos(1) > 3 && Synpos(2) > 4)
+                Security sec = secs["XLY"];
+                if (sec.ask > 0 && sec.bid > 0)
                 {
-                    AddOrder("XLY", Direction.SELL, secs["XLY"].mid, 10);
+                    if (Synpos(0) > 0 && Synpos(1) > 0 && Synpos(2) > 0)
+                    {
+                        AddOrder("XLY", Direction.SELL, secs["XLY"].mid, 4);
+                    }
+                    else if (Synpos(0) < 0 && Synpos(1) < 0 && Synpos(2) < 0)
+                    {
+                        AddOrder("XLY", Direction.BUY, secs["XLY"].mid, 4);
+                    }
+                    else
+                    {
+                        if ((sec.ask - sec.bid) > sec.mid * 5 / 10000)
+                        {
+                            AddOrder("XLY", BUY, sec.bid + 1, 2);
+                            AddOrder("XLY", SELL, sec.ask - 1, 2);
+                        }
+                    }
+                    AddOrder("XLY", BUY, sec.bid - sec.mid * 10 / 10000, 2);
+                    AddOrder("XLY", SELL, sec.ask + sec.mid * 10 / 10000, 2);
+                    AddOrder("XLY", BUY, sec.bid - sec.mid * 30 / 10000, 5);
+                    AddOrder("XLY", SELL, sec.ask + sec.mid * 30 / 10000, 5);
                 }
-                if (Synpos(0) < 0 && Synpos(1) < -3 && Synpos(2) < -4)
+                else
                 {
-                    AddOrder("XLY", Direction.BUY, secs["XLY"].mid, 10);
+                    if (sec.ask > 0)
+                    {
+                        AddOrder("XLY", SELL, sec.ask + sec.ask * 10 / 10000, 5);
+                        AddOrder("XLY", BUY, sec.ask / 2, 25);
+                    }
+                    else if (sec.bid > 0)
+                    {
+                        AddOrder("XLY", BUY, sec.bid - sec.bid * 10 / 10000, 5);
+                        AddOrder("XLY", SELL, sec.bid * 2, 25);
+                    }
                 }
-                if (Synpos(3) > 3 && Synpos(4) > 6 && Synpos(5) > 3)
+
+                sec = secs["XLP"];
+                if (sec.ask > 0 && sec.bid > 0)
                 {
-                    AddOrder("XLP", Direction.SELL, secs["XLP"].mid, 10);
+                    if (Synpos(3) > 0 && Synpos(4) > 0 && Synpos(5) > 0)
+                    {
+                        AddOrder("XLP", Direction.SELL, secs["XLP"].mid, 4);
+                    }
+                    else if (Synpos(3) < 0 && Synpos(4) < 0 && Synpos(5) < 0)
+                    {
+                        AddOrder("XLP", Direction.BUY, secs["XLP"].mid, 4);
+                    }
+                    else
+                    {
+                        if ((sec.ask - sec.bid) > sec.mid * 5 / 10000)
+                        {
+                            AddOrder("XLP", BUY, sec.bid + 1, 2);
+                            AddOrder("XLP", SELL, sec.ask - 1, 2);
+                        }
+                    }
+                    AddOrder("XLP", BUY, sec.bid - sec.mid * 10 / 10000, 2);
+                    AddOrder("XLP", SELL, sec.ask + sec.mid * 10 / 10000, 2);
+                    AddOrder("XLP", BUY, sec.bid - sec.mid * 30 / 10000, 5);
+                    AddOrder("XLP", SELL, sec.ask + sec.mid * 30 / 10000, 5);
                 }
-                if (Synpos(3) < -3 && Synpos(4) < -6 && Synpos(5) < -3)
+                else
                 {
-                    AddOrder("XLP", Direction.BUY, secs["XLP"].mid, 10);
+                    if (sec.ask > 0)
+                    {
+                        AddOrder("XLP", SELL, sec.ask + sec.ask * 10 / 10000, 5);
+                        AddOrder("XLP", BUY, sec.ask / 2, 25);
+                    }
+                    else if (sec.bid > 0)
+                    {
+                        AddOrder("XLP", BUY, sec.bid - sec.bid * 10 / 10000, 5);
+                        AddOrder("XLP", SELL, sec.bid * 2, 25);
+                    }
                 }
-                if (Synpos(6) > 2 && Synpos(7) > 3 && Synpos(8) > 4)
+
+                sec = secs["XLU"];
+                if (sec.ask > 0 && sec.bid > 0)
                 {
-                    AddOrder("XLU", Direction.SELL, secs["XLU"].mid, 10);
+                    if (Synpos(6) > 0 && Synpos(7) > 0 && Synpos(8) > 0)
+                    {
+                        AddOrder("XLU", Direction.SELL, secs["XLU"].mid, 4);
+                    }
+                    else if (Synpos(6) < 0 && Synpos(7) < 0 && Synpos(8) < 0)
+                    {
+                        AddOrder("XLU", Direction.BUY, secs["XLU"].mid, 4);
+                    }
+                    else
+                    {
+                        if ((sec.ask - sec.bid) > sec.mid * 5 / 10000)
+                        {
+                            AddOrder("XLU", BUY, sec.bid + 1, 2);
+                            AddOrder("XLU", SELL, sec.ask - 1, 2);
+                        }
+                    }
+                    AddOrder("XLU", BUY, sec.bid - sec.mid * 10 / 10000, 2);
+                    AddOrder("XLU", SELL, sec.ask + sec.mid * 10 / 10000, 2);
+                    AddOrder("XLU", BUY, sec.bid - sec.mid * 30 / 10000, 5);
+                    AddOrder("XLU", SELL, sec.ask + sec.mid * 30 / 10000, 5);
                 }
-                if (Synpos(6) < -2 && Synpos(7) < -3 && Synpos(8) < -4)
+                else
                 {
-                    AddOrder("XLU", Direction.BUY, secs["XLU"].mid, 10);
+                    if (sec.ask > 0)
+                    {
+                        AddOrder("XLU", SELL, sec.ask + sec.ask * 10 / 10000, 5);
+                        AddOrder("XLU", BUY, sec.ask / 2, 25);
+                    }
+                    else if (sec.bid > 0)
+                    {
+                        AddOrder("XLU", BUY, sec.bid - sec.bid * 10 / 10000, 5);
+                        AddOrder("XLU", SELL, sec.bid * 2, 25);
+                    }
                 }
             }
         }
