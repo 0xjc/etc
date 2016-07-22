@@ -250,8 +250,8 @@ namespace etc
                 }
                 else
                 {
-                    existingOrder[symbol].Add(market.Add(symbol, Direction.BUY, sec.bid, 10));
-                    existingOrder[symbol].Add(market.Add(symbol, Direction.SELL, sec.ask, 10));
+                    existingOrder[symbol].Add(market.Add(symbol, Direction.BUY, sec.bid+1, 10));
+                    existingOrder[symbol].Add(market.Add(symbol, Direction.SELL, sec.ask-1, 10));
                 }
             }
 		}
