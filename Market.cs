@@ -156,7 +156,12 @@ namespace etc
 		private string GetTimePretty()
 		{
 			DateTime now = DateTime.Now;
-			return now.TimeOfDay.ToString();
+			TimeSpan ofDay = now.TimeOfDay;
+			return string.Format("{1}:{2}.{3}",
+				ofDay.Hours.ToString("D2"),
+				ofDay.Minutes.ToString("D2"),
+				ofDay.Seconds.ToString("D2"),
+				((ofDay.Milliseconds + 5) / 10).ToString("D2"));
 		}
 
 		public void OutputLoop()
