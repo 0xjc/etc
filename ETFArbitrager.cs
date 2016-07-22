@@ -240,14 +240,14 @@ namespace etc
                 {
                     if (sec.bid > 0 && sec.mid > 0)
                     {
-                        existingOrder[symbol].Add(market.Add(symbol, Direction.SELL, (sec.bid + 4 * sec.mid) / 5, Math.Abs(synpos)));
+                        existingOrder[symbol].Add(market.Add(symbol, Direction.SELL, (0*sec.bid + 5 * sec.mid) / 5, Math.Abs(synpos)));
                     }
                 }
                 else if (synpos < -3)
                 {
                     if (sec.ask > 0 && sec.mid > 0)
                     {
-                        existingOrder[symbol].Add(market.Add(symbol, Direction.BUY, (sec.ask + 4 * sec.mid) / 5, Math.Abs(synpos)));
+                        existingOrder[symbol].Add(market.Add(symbol, Direction.BUY, (0*sec.ask + 5 * sec.mid) / 5, Math.Abs(synpos)));
                     }
                 }
             }
