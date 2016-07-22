@@ -111,7 +111,11 @@ namespace etc
 		private NetworkStream stream;
 		private StreamReader reader;
 		private StreamWriter writer;
+
 		private StreamWriter posDumpFile;
+		private StreamWriter bookDumpFile;
+		private DateTime lastPosDump;
+		private DateTime lastBookDump;
 
 		public const int INVALID_ID = -1;
 		private object thisLock = new object();
@@ -121,21 +125,25 @@ namespace etc
 
 		private int cash;
 		private Dictionary<string, int> positions;
-		private DateTime lastPositionsDump;
+
+		private ConcurrentDictionary<string, Security> securities;
 
 		private Dictionary<int, ConvertOrder> pendingConverts;
 
-		public Market(NetworkStream stream_, string posDumpFilename)
+		public Market(NetworkStream stream_, string runID)
 		{
 			stream = stream_;
 			reader = new StreamReader(stream, Encoding.ASCII);
 			writer = new StreamWriter(stream, Encoding.ASCII);
-			posDumpFile = File.CreateText(posDumpFilename);
+			posDumpFile = File.CreateText(string.Format("pos-{0}.txt", runID));
+			bookDumpFile = File.CreateText(string.Format("book-{0}.txt", runID));
+			lastPosDump = DateTime.Now;
+			lastBookDump = DateTime.Now;
 			sendAvailable = new SemaphoreSlim(0);
 			sendQueue = new ConcurrentQueue<string>();
 			cash = 0;
 			positions = new Dictionary<string, int>();
-			lastPositionsDump = DateTime.Now;
+			securities = new ConcurrentDictionary<string, Security>();
 			pendingConverts = new Dictionary<int, ConvertOrder>();
 		}
 
@@ -180,6 +188,40 @@ namespace etc
 			else return 0;
 		}
 
+		// Creates a snapshot of the current security (safe)
+		public Security GetSecurity(string symbol)
+		{
+			Security sec = GetSecurityInternal(symbol);
+			return sec.Clone();
+		}
+
+		private Security GetSecurityInternal(string symbol)
+		{
+			if (!securities.ContainsKey(symbol))
+			{
+				securities.TryAdd(symbol, new Security(symbol));
+			}
+			return securities[symbol];
+		}
+
+		public void DumpBooks()
+		{
+			StringBuilder sb = new StringBuilder();
+			sb.Append("BOOK: ");
+			foreach (var sec in securities.Values)
+			{
+				lock (sec.GetLock())
+				{
+					sb.Append(string.Format(" {0}:{1}@{2}", sec.symbol, sec.bid, sec.ask));
+				}
+			}
+			string dumpText = sb.ToString();
+			bookDumpFile.WriteLine(dumpText);
+			bookDumpFile.FlushAsync();
+			Console.WriteLine(dumpText);
+			lastBookDump = DateTime.Now;
+		}
+
 		public void DumpCashAndPositions()
 		{
 			StringBuilder sb = new StringBuilder();
@@ -192,14 +234,11 @@ namespace etc
 					sb.Append(string.Format(" {0}={1}", kvp.Key, kvp.Value));
 				}
 			}
-			sb.AppendLine();
-
 			string dumpText = sb.ToString();
-			posDumpFile.Write(dumpText);
-			posDumpFile.Flush();
-			Console.Write(dumpText);
-
-			lastPositionsDump = DateTime.Now;
+			posDumpFile.WriteLine(dumpText);
+			posDumpFile.FlushAsync();
+			Console.WriteLine(dumpText);
+			lastPosDump = DateTime.Now;
 		}
 
 		public void ProcessMessage(string msg)
@@ -281,6 +320,8 @@ namespace etc
 					string[] priceAndSize = toks[i].Split(':');
 					args.sells.Add(int.Parse(priceAndSize[0]), int.Parse(priceAndSize[1]));
 				}
+				var sec = GetSecurityInternal(args.symbol);
+				sec.OnBook(args);
 				var handler = Book;
 				if (handler != null) handler(this, args);
 			}
@@ -290,6 +331,8 @@ namespace etc
 				args.symbol = toks[1];
 				args.price = int.Parse(toks[2]);
 				args.size = int.Parse(toks[3]);
+				var sec = GetSecurityInternal(args.symbol);
+				sec.OnTrade(args);
 				var handler = Trade;
 				if (handler != null) handler(this, args);
 			}
@@ -419,9 +462,14 @@ namespace etc
 				{
 					LogError("Exn in Receive processing: " + ex.Message);
 				}
-				if (DateTime.Now - lastPositionsDump > TimeSpan.FromSeconds(1.0))
+				var now = DateTime.Now;
+				if (now - lastPosDump > TimeSpan.FromSeconds(1.0))
 				{
 					DumpCashAndPositions();
+				}
+				if (now - lastBookDump > TimeSpan.FromSeconds(1.0))
+				{
+					DumpBooks();
 				}
 			}
 		}
