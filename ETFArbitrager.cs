@@ -15,6 +15,7 @@ namespace etc
 			public SortedDictionary<int, int> sells;
             public int ask; // -1 to start with
             public int bid; // -1 to start with
+            public int mid;
 			public int lastTradePrice; // -1 to start with
 			public DateTime? lastTradeTime; // null to start with
 			//public double fair; // estimate; -1.0 if unable to calculate (WARNING!)
@@ -40,6 +41,14 @@ namespace etc
 				if (sells.Count == 0) return -1;
 				return sells.First().Key;
 			}
+            public int Mid()
+            {
+                if (bid<0 || ask<0)
+                {
+                    return -1;
+                }
+                return (int)((ask+bid)/2);
+            }
 
 			// do not use  
             /*
@@ -118,7 +127,7 @@ namespace etc
 
         public static int MEMBER_COUNT = 9;
         public int RSP_DIVISOR = 20;
-        public int RSP_EDGE = 10;
+        public int RSP_EDGE = 5;
         public Security rsp;
         public Security[] members = new Security[MEMBER_COUNT];
         public string[] memberTickers = new string[MEMBER_COUNT];
@@ -157,7 +166,7 @@ namespace etc
                 DoArb();
                 DoConvert();
                 DoUnposition();
-				Task.Delay(200).Wait();
+				Task.Delay(800).Wait();
 			}
 		}
 		
@@ -197,8 +206,8 @@ namespace etc
                 CancelExistingOrder("RSP");
                 Task.Delay(200).Wait();
                 //Console.WriteLine("ETF DoArb() : " + "rsp_buy");
-                existingOrder["RSP"].Add(market.Add("RSP", Direction.SELL, (int)Math.Ceiling(rsp_sell), Math.Min(10, 100 + market.GetPosition("RSP"))));
-                existingOrder["RSP"].Add(market.Add("RSP", Direction.BUY, (int)Math.Floor(rsp_buy), Math.Min(10, 100 - market.GetPosition("RSP"))));
+                existingOrder["RSP"].Add(market.Add("RSP", Direction.SELL, (int)Math.Ceiling(rsp_sell), Math.Min(20, 100 + market.GetPosition("RSP"))));
+                existingOrder["RSP"].Add(market.Add("RSP", Direction.BUY, (int)Math.Floor(rsp_buy), Math.Min(20, 100 - market.GetPosition("RSP"))));
             }
 		}
 
@@ -227,18 +236,18 @@ namespace etc
                 CancelExistingOrder(symbol);
                 int pos = market.GetPosition(symbol);
                 int synpos = pos + (int)Math.Round(market.GetPosition("RSP") * memberWeights[memberIndex] / ((double)RSP_DIVISOR));
-                if (synpos > 1)
+                if (synpos > 3)
                 {
-                    if (sec.bid > 0)
+                    if (sec.bid > 0 && sec.mid > 0)
                     {
-                        existingOrder[symbol].Add(market.Add(symbol, Direction.SELL, sec.bid, Math.Abs(synpos)));
+                        existingOrder[symbol].Add(market.Add(symbol, Direction.SELL, (sec.bid + 4 * sec.mid) / 5, Math.Abs(synpos)));
                     }
                 }
-                else if (synpos < -1)
+                else if (synpos < -3)
                 {
-                    if (sec.ask > 0)
+                    if (sec.ask > 0 && sec.mid > 0)
                     {
-                        existingOrder[symbol].Add(market.Add(symbol, Direction.BUY, sec.ask, Math.Abs(synpos)));
+                        existingOrder[symbol].Add(market.Add(symbol, Direction.BUY, (sec.ask + 4 * sec.mid) / 5, Math.Abs(synpos)));
                     }
                 }
             }
@@ -266,6 +275,7 @@ namespace etc
 					sec.sells = e.sells;
 					sec.ask = sec.Ask();
 					sec.bid = sec.Bid();
+                    sec.mid = sec.Mid();
 				}
 			}
 		}
