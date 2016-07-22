@@ -8,7 +8,7 @@ namespace etc
 {
 	class ETFArbitrager
 	{
-		class Security
+		public class Security
 		{
 			public string symbol;
 			public SortedDictionary<int, int> buys;
@@ -192,6 +192,7 @@ namespace etc
 
                 CancelExistingOrder("RSP");
                 Task.Delay(200).Wait();
+                Console.WriteLine("ETF DoArb() : " );
                 existingOrder["RSP"].Add(market.Add("RSP", Direction.SELL, (int)Math.Ceiling(rsp_sell), Math.Min(10, 100 + market.GetPosition("RSP"))));
                 existingOrder["RSP"].Add(market.Add("RSP", Direction.BUY, (int)Math.Floor(rsp_buy), Math.Min(10, 100 - market.GetPosition("RSP"))));
             }
@@ -222,22 +223,22 @@ namespace etc
                 CancelExistingOrder(symbol);
                 if (pos > 5)
                 {
-                    double fair = sec.fair;
-                    int ask = sec.Ask();
-                    if (fair != 0.0)
+                    //double fair = sec.fair;
+                    //int ask = sec.Ask();
+                    //if (fair != 0.0)
                     {
-                        int price = (ask == 0) ? ((int)Math.Round(fair) + 1) : (int)(Math.Round((fair + ask) / 2.0));
-                        existingOrder[symbol] = market.Add(symbol, Direction.SELL, price, pos / 2);
+                        //int price = (ask == 0) ? ((int)Math.Round(fair) + 1) : (int)(Math.Round((fair + ask) / 2.0));
+                        //existingOrder[symbol] = market.Add(symbol, Direction.SELL, price, pos / 2);
                     }
                 }
                 else if (pos < -5)
                 {
-                    double fair = sec.fair;
-                    int bid = sec.Bid();
-                    if (fair != 0.0)
+                    //double fair = sec.fair;
+                    //int bid = sec.Bid();
+                    //if (fair != 0.0)
                     {
-                        int price = (bid == 0) ? ((int)Math.Round(fair) - 1) : (int)(Math.Round((fair + bid) / 2.0));
-                        existingOrder[symbol] = market.Add(symbol, Direction.BUY, price, pos / 2);
+                        //int price = (bid == 0) ? ((int)Math.Round(fair) - 1) : (int)(Math.Round((fair + bid) / 2.0));
+                        //existingOrder[symbol] = market.Add(symbol, Direction.BUY, price, pos / 2);
                     }
                 }
             }
