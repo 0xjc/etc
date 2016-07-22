@@ -116,6 +116,8 @@ namespace etc
 		public const int INVALID_ID = -1;
 		private object thisLock = new object();
 		private int currentID = 0;
+		private ConcurrentQueue<string> sendQueue;
+		private SemaphoreSlim sendAvailable;
 
 		private int cash;
 		private Dictionary<string, int> positions;
@@ -128,11 +130,13 @@ namespace etc
 			stream = stream_;
 			reader = new StreamReader(stream, Encoding.ASCII);
 			writer = new StreamWriter(stream, Encoding.ASCII);
+			posDumpFile = File.CreateText(posDumpFilename);
+			sendAvailable = new SemaphoreSlim(0);
+			sendQueue = new ConcurrentQueue<string>();
 			cash = 0;
 			positions = new Dictionary<string, int>();
 			lastPositionsDump = DateTime.Now;
 			pendingConverts = new Dictionary<int, ConvertOrder>();
-			posDumpFile = File.CreateText(posDumpFilename);
 		}
 
 		private void LogSend(string msg)
@@ -416,13 +420,31 @@ namespace etc
 			}
 		}
 
+		public void SendLoop()
+		{
+			while (true)
+			{
+				string msg;
+				sendAvailable.Wait();
+				if (sendQueue.TryDequeue(out msg))
+				{
+					writer.WriteLine(msg);
+					writer.Flush();
+					LogSend(msg);
+				}
+			}
+		}
+
+		public void QueueSend(string msg)
+		{
+			sendQueue.Enqueue(msg);
+			sendAvailable.Release();
+		}
+
 		public void Hello()
 		{
 			string msg = "HELLO AMPERE";
-
-			writer.WriteLine(msg);
-			writer.Flush();
-			LogSend(msg);
+			QueueSend(msg);
 		}
 
 		public int Add(string symbol, Direction dir, int price, int size)
@@ -442,10 +464,7 @@ namespace etc
 
 			int id = Interlocked.Increment(ref currentID);
 			string msg = string.Format("ADD {0} {1} {2} {3} {4}", id, symbol.ToUpper(), dir, price, size);
-
-			writer.WriteLine(msg);
-			writer.Flush();
-			LogSend(msg);
+			QueueSend(msg);
 			return id;
 		}
 
@@ -460,21 +479,15 @@ namespace etc
 
 			int id = Interlocked.Increment(ref currentID);
 			string msg = string.Format("CONVERT {0} {1} {2} {3}", id, symbol.ToUpper(), dir, size);
-
 			pendingConverts.Add(id, new ConvertOrder(symbol, dir, size));
-			writer.WriteLine(msg);
-			writer.Flush();
-			LogSend(msg);
+			QueueSend(msg);
 			return id;
 		}
 
 		public void Cancel(int id)
 		{
 			string msg = string.Format("CANCEL {0}", id);
-
-			writer.WriteLine(msg);
-			writer.Flush();
-			LogSend(msg);
+			QueueSend(msg);
 		}
 	}
 }
