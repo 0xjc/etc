@@ -165,17 +165,18 @@ namespace etc
 		{
             lock (thisLock)
             {
-                Console.WriteLine("cancel orders" + " order counts " + existingOrder[symbol].Count);
+                //Console.WriteLine("cancel orders" + " order counts " + existingOrder[symbol].Count);
                 if (existingOrder[symbol].Count > 0)
                 {
                     foreach (int orderId in existingOrder[symbol])
                     {
-                        Console.WriteLine("cancel orders" + " orderid " + orderId);
+                        //Console.WriteLine("cancel orders" + " orderid " + orderId);
                         market.Cancel(orderId);
-                        Console.WriteLine("cancel orders" + " remove " + orderId);
-                        existingOrder[symbol].Remove(orderId);
+                        //Console.WriteLine("cancel orders" + " remove " + orderId);
+                        //existingOrder[symbol].Remove(orderId);
                     }
                 }
+                existingOrder[symbol] = new HashSet<int>();
             }
 		}
 
