@@ -20,6 +20,8 @@ namespace etc
 			var stream = client.GetStream();
 			var market = new Market(stream, posDumpFilename);
 
+			Task.Run(() => market.SendLoop());
+
 			market.Hello();
 
 			//var bonds = new BondMarketMaker(market);
