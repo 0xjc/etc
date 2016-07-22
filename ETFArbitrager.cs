@@ -118,7 +118,7 @@ namespace etc
 
         public static int MEMBER_COUNT = 9;
         public int RSP_DIVISOR = 20;
-        public int RSP_EDGE = 5;
+        public int RSP_EDGE = 10;
         public Security rsp;
         public Security[] members = new Security[MEMBER_COUNT];
         public string[] memberTickers = new string[MEMBER_COUNT];
@@ -156,7 +156,7 @@ namespace etc
 			{
                 DoArb();
                 DoConvert();
-                //DoUnposition();
+                DoUnposition();
 				Task.Delay(200).Wait();
 			}
 		}
@@ -209,40 +209,36 @@ namespace etc
                 int rspPos = market.GetPosition("RSP");
                 if (rspPos >= 80)
 				{
-                    market.Convert("RSP", Direction.SELL, 20);
+                    market.Convert("RSP", Direction.SELL, 80);
 				}
                 else if (rspPos <= -80)
 				{
-                    market.Convert("RSP", Direction.BUY, 20);
+                    market.Convert("RSP", Direction.BUY, 80);
 				}
 			}
 		}
 
-		private void UnpositionOne(string symbol)
+		private void UnpositionOne(int memberIndex)
 		{
             lock (thisLock)
             {
+                string symbol = memberTickers[memberIndex];
                 var sec = secs[symbol];
-                int pos = market.GetPosition(symbol);
                 CancelExistingOrder(symbol);
-                if (pos > 5)
+                int pos = market.GetPosition(symbol);
+                int synpos = pos + market.GetPosition("RSP") * memberWeights[memberIndex] / RSP_DIVISOR;
+                if (synpos > 5)
                 {
-                    //double fair = sec.fair;
-                    //int ask = sec.Ask();
-                    //if (fair != 0.0)
+                    if (sec.bid > 0)
                     {
-                        //int price = (ask == 0) ? ((int)Math.Round(fair) + 1) : (int)(Math.Round((fair + ask) / 2.0));
-                        //existingOrder[symbol] = market.Add(symbol, Direction.SELL, price, pos / 2);
+                        existingOrder[symbol].Add(market.Add(symbol, Direction.SELL, sec.bid, Math.Abs(synpos) / 2));
                     }
                 }
-                else if (pos < -5)
+                else if (synpos < -5)
                 {
-                    //double fair = sec.fair;
-                    //int bid = sec.Bid();
-                    //if (fair != 0.0)
+                    if (sec.ask > 0)
                     {
-                        //int price = (bid == 0) ? ((int)Math.Round(fair) - 1) : (int)(Math.Round((fair + bid) / 2.0));
-                        //existingOrder[symbol] = market.Add(symbol, Direction.BUY, price, pos / 2);
+                        existingOrder[symbol].Add(market.Add(symbol, Direction.BUY, sec.ask, Math.Abs(synpos) / 2));
                     }
                 }
             }
@@ -254,7 +250,7 @@ namespace etc
 			{
 				for (int i=0;i<MEMBER_COUNT;i++)
                 {
-                    UnpositionOne(memberTickers[i]);
+                    UnpositionOne(i);
                 }
 			}
 		}
