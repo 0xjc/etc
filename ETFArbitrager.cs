@@ -226,19 +226,19 @@ namespace etc
                 var sec = secs[symbol];
                 CancelExistingOrder(symbol);
                 int pos = market.GetPosition(symbol);
-                int synpos = pos + market.GetPosition("RSP") * memberWeights[memberIndex] / RSP_DIVISOR;
-                if (synpos > 5)
+                int synpos = pos + (int)Math.Round(market.GetPosition("RSP") * memberWeights[memberIndex] / ((double)RSP_DIVISOR));
+                if (synpos > 1)
                 {
                     if (sec.bid > 0)
                     {
-                        existingOrder[symbol].Add(market.Add(symbol, Direction.SELL, sec.bid, Math.Abs(synpos) / 2));
+                        existingOrder[symbol].Add(market.Add(symbol, Direction.SELL, sec.bid, Math.Abs(synpos)));
                     }
                 }
-                else if (synpos < -5)
+                else if (synpos < -1)
                 {
                     if (sec.ask > 0)
                     {
-                        existingOrder[symbol].Add(market.Add(symbol, Direction.BUY, sec.ask, Math.Abs(synpos) / 2));
+                        existingOrder[symbol].Add(market.Add(symbol, Direction.BUY, sec.ask, Math.Abs(synpos)));
                     }
                 }
             }
