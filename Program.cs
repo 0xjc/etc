@@ -14,11 +14,11 @@ namespace etc
 			string host = args[0];
 			int port = int.Parse(args[1]);
 			Console.WriteLine(string.Format("Connecting to {0}:{1}", host, port));
-			string posDumpFilename = string.Format("pos-{0}-{1}.txt", host, port);
+			string runID = string.Format("{0}-{1}", host, port);
 
 			var client = new TcpClient(host, port);
 			var stream = client.GetStream();
-			var market = new Market(stream, posDumpFilename);
+			var market = new Market(stream, runID);
 
 			Task.Run(() => market.SendLoop());
 
