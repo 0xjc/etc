@@ -238,16 +238,16 @@ namespace etc
                 int synpos = pos + (int)Math.Round(market.GetPosition("RSP") * memberWeights[memberIndex] / ((double)RSP_DIVISOR));
                 if (synpos > 3)
                 {
-                    if (sec.bid > 0 && sec.mid >0)
+                    if (sec.bid > 0 && sec.mid > 0)
                     {
-                        existingOrder[symbol].Add(market.Add(symbol, Direction.SELL, (sec.bid + sec.mid)/2, Math.Abs(synpos)));
+                        existingOrder[symbol].Add(market.Add(symbol, Direction.SELL, (sec.bid + 4 * sec.mid) / 5, Math.Abs(synpos)));
                     }
                 }
                 else if (synpos < -3)
                 {
                     if (sec.ask > 0 && sec.mid > 0)
                     {
-                        existingOrder[symbol].Add(market.Add(symbol, Direction.BUY, (sec.ask + sec.mid) / 2, Math.Abs(synpos)));
+                        existingOrder[symbol].Add(market.Add(symbol, Direction.BUY, (sec.ask + 4 * sec.mid) / 5, Math.Abs(synpos)));
                     }
                 }
             }
