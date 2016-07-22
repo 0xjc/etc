@@ -142,7 +142,20 @@ namespace etc
 
 		private void LogReceive(string msg)
 		{
-			Console.WriteLine("RECV: " + msg);
+			string colorCode;
+			int spc = msg.IndexOf(' ');
+			if (spc == -1) colorCode = "";
+			else
+			{
+				string pre = msg.Substring(0, spc);
+				int color;
+				if (pre == "ACK") color = 32;
+				else if (pre == "FILL") color = 33;
+				else if (pre == "REJECT") color = 31;
+				else color = 0;
+				colorCode = "\x1b[" + color + "m";
+			}
+			Console.WriteLine(colorCode + "RECV: " + msg + (colorCode == "" ? "" : "\x1b[0m"));
 		}
 
 		private void LogError(string msg)
